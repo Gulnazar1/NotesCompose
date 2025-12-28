@@ -3,27 +3,35 @@ package com.startupapps.notescompose.navigation
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.mvikotlin.core.instancekeeper.getStore
+import com.arkivanov.mvikotlin.core.store.StoreFactory
+import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
+import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.startupapps.notescompose.data.NoteDao
-
-import androidx.compose.runtime.mutableStateListOf
-import com.arkivanov.decompose.*
-import com.arkivanov.decompose.router.stack.*
-import com.startupapps.notescompose.data.*
 import com.startupapps.notescompose.data.NoteEntity
-import kotlinx.coroutines.*
-import kotlinx.serialization.Serializable
+import com.startupapps.notescompose.store.NoteStore
+import com.startupapps.notescompose.store.NoteStoreFactory
+import kotlinx.coroutines.flow.StateFlow
 
 class RootComponent(
     componentContext: ComponentContext,
     private val dao: NoteDao
 ) : ComponentContext by componentContext {
 
-    private val navigation = StackNavigation<Screen>()
-    val notes = mutableStateListOf<NoteEntity>()
-
-    init {
-        loadNotes()
+    private val store = instanceKeeper.getStore {
+        NoteStoreFactory(
+            storeFactory = DefaultStoreFactory(),
+            dao = dao
+        ).create()
     }
+
+    // Истифодаи StateFlow аз MVIKotlin барои назорат
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val state: StateFlow<NoteStore.State> = store.stateFlow
+
+    private val navigation = StackNavigation<Screen>()
 
     val stack = childStack(
         source = navigation,
@@ -32,35 +40,16 @@ class RootComponent(
         handleBackButton = true
     ) { screen, _ -> screen }
 
-    fun loadNotes() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val list = dao.getAll()
-            withContext(Dispatchers.Main) {
-                notes.clear()
-                notes.addAll(list)
-            }
-        }
-    }
-
     fun addNote(title: String, text: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            dao.insert(NoteEntity(title = title, text = text))
-            loadNotes()
-        }
+        store.accept(NoteStore.Intent.Add(title, text))
     }
 
     fun updateNote(note: NoteEntity, title: String, text: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            dao.update(note.copy(title = title, text = text))
-            loadNotes()
-        }
+        store.accept(NoteStore.Intent.Update(note, title, text))
     }
 
     fun deleteNote(note: NoteEntity) {
-        CoroutineScope(Dispatchers.IO).launch {
-            dao.delete(note)
-            loadNotes()
-        }
+        store.accept(NoteStore.Intent.Delete(note))
     }
 
     fun openEdit(id: Int?) = navigation.push(Screen.Edit(id))
