@@ -6,7 +6,6 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
-import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.startupapps.notescompose.data.NoteDao
@@ -27,7 +26,7 @@ class RootComponent(
         ).create()
     }
 
-    // Истифодаи StateFlow аз MVIKotlin барои назорат
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val state: StateFlow<NoteStore.State> = store.stateFlow
 

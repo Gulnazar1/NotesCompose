@@ -8,7 +8,7 @@ import com.startupapps.notescompose.data.NoteEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+                      //---MVI---//
 class NoteStoreFactory(
     private val storeFactory: StoreFactory,
     private val dao: NoteDao

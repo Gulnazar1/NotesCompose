@@ -5,21 +5,29 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.room.Room
-import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.defaultComponentContext
 import com.arkivanov.decompose.extensions.compose.stack.Children
-import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.google.android.gms.ads.MobileAds
+import com.startupapps.notescompose.adds.AdBanner
 import com.startupapps.notescompose.data.AppDatabase
 import com.startupapps.notescompose.navigation.RootComponent
 import com.startupapps.notescompose.navigation.Screen
+import com.startupapps.notescompose.ui.theme.NotesComposeTheme
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MobileAds.initialize(this)
+
 
         val db = Room.databaseBuilder(
             applicationContext,
@@ -28,68 +36,75 @@ class MainActivity : ComponentActivity() {
         ).build()
 
         val root = RootComponent(
-            DefaultComponentContext(LifecycleRegistry()),
+            defaultComponentContext(),
             db.noteDao()
         )
 
         enableEdgeToEdge()
 
         setContent {
+            NotesComposeTheme {
+                val state by root.state.collectAsState()
+                Column(modifier = Modifier.fillMaxSize()) {
 
-            val state by root.state.collectAsState()
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        Children(stack = root.stack) {
+                            when (val screen = it.instance) {
 
-            Children(stack = root.stack) {
-                when (val screen = it.instance) {
+                                is Screen.Main -> MainScreen(
+                                    notes = state.notes,
+                                    onAdd = { root.openEdit(null) },
+                                    onClick = { root.openDetail(it) }
+                                )
 
-                    is Screen.Main -> MainScreen(
-                        notes = state.notes,
-                        onAdd = { root.openEdit(null) },
-                        onClick = { root.openDetail(it) }
-                    )
+                                is Screen.Edit -> EditScreen(
+                                    onSave = { title, text ->
+                                        root.addNote(title, text)
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Заметка сохранена",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        root.back()
+                                    },
+                                    onCancel = { root.back() }
+                                )
 
-                    is Screen.Edit -> EditScreen(
-                        onSave = { title, text ->
-                            root.addNote(title, text)
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Заметка сохранена",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            root.back()
-                        },
-                        onCancel = { root.back() }
-                    )
-
-                    is Screen.Detail -> {
-                        val note = state.notes.firstOrNull { it.id == screen.id }
-                        if (note != null) {
-                            DetailScreen(
-                                initialTitle = note.title,
-                                initialText = note.text,
-                                onSave = { title, text ->
-                                    root.updateNote(note, title, text)
-                                    Toast.makeText(
-                                        this@MainActivity,
-                                        "Заметка обновлена",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    root.back()
-                                },
-                                onDelete = {
-                                    root.deleteNote(note)
-                                    Toast.makeText(
-                                        this@MainActivity,
-                                        "Заметка удалена",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    root.back()
-                                },
-                                onBack = { root.back() }
-                            )
-                        } else {
-                            root.back()
+                                is Screen.Detail -> {
+                                    val note = state.notes.firstOrNull { it.id == screen.id }
+                                    if (note != null) {
+                                        DetailScreen(
+                                            initialTitle = note.title,
+                                            initialText = note.text,
+                                            onSave = { title, text ->
+                                                root.updateNote(note, title, text)
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "Заметка обновлена",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                root.back()
+                                            },
+                                            onDelete = {
+                                                root.deleteNote(note)
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "Заметка удалена",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                root.back()
+                                            },
+                                            onBack = { root.back() }
+                                        )
+                                    } else {
+                                        root.back()
+                                    }
+                                }
+                            }
                         }
                     }
+
+                    AdBanner(adUnitId = "ca-app-pub-8151982607161786/3056261295")
                 }
             }
         }
