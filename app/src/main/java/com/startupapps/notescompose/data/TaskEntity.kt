@@ -3,13 +3,13 @@ package com.startupapps.notescompose.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "notes")
-data class NoteEntity(
+@Entity(tableName = "tasks")
+data class TaskEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val title: String,
     val text: String,
+    val isCompleted: Boolean = false,
+    val reminderTime: Long? = null,
     val isDeleted: Boolean = false,
-    val deletedAt: Long? = null,
-    val isPinned: Boolean = false // --закрепит--
+    val deletedAt: Long? = null
 )

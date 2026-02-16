@@ -1,5 +1,9 @@
 package com.startupapps.notescompose
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -12,7 +16,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,16 +43,14 @@ fun EditScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Новая заметка",
-                        style = MaterialTheme.typography.titleLarge
+                        "Новая заметка",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
                 },
                 actions = {
@@ -53,25 +58,22 @@ fun EditScreen(
                         enabled = canSave,
                         onClick = {
                             onSave(title.trim(), text.trim())
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Заметка сохранена")
-                            }
+                            scope.launch { snackbarHostState.showSnackbar("Заметка сохранена") }
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            Icons.Default.Check, 
                             contentDescription = "Сохранить",
-                            tint = if (canSave)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            tint = if (canSave) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         }
     ) { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,14 +81,14 @@ fun EditScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("Заголовок") },
                 placeholder = { Text("Введите заголовок") },
-                singleLine = true,
-                shape = MaterialTheme.shapes.medium,
+                singleLine = false,
+                maxLines = 2,
+                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 24.sp),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -95,9 +97,9 @@ fun EditScreen(
                 onValueChange = { text = it },
                 label = { Text("Текст заметки") },
                 placeholder = { Text("Начните писать...") },
-                shape = MaterialTheme.shapes.medium,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .weight(1f),
                 maxLines = Int.MAX_VALUE
             )

@@ -8,15 +8,57 @@ import androidx.room.Update
 
 @Dao
 interface NoteDao{
-    //----- барои хондан//
-    @Query("SELECT * FROM notes")
-    suspend fun getAll(): List<NoteEntity>
+    // --- Заметки ---
+    @Query("SELECT * FROM notes WHERE isDeleted = 0 ORDER BY isPinned DESC, id DESC")
+    suspend fun getAllNotes(): List<NoteEntity>
 
-    //----- илова кардан
+    @Query("SELECT * FROM notes WHERE isDeleted = 1")
+    suspend fun getTrashNotes(): List<NoteEntity>
+
     @Insert
-    suspend fun insert(note: NoteEntity)
+    suspend fun insertNote(note: NoteEntity)
+
     @Update
-    suspend fun update(note: NoteEntity)
+    suspend fun updateNote(note: NoteEntity)
+
     @Delete
-    suspend fun delete(note: NoteEntity)
+    suspend fun deleteNote(note: NoteEntity)
+
+    @Query("DELETE FROM notes WHERE isDeleted = 1")
+    suspend fun clearNotesTrash()
+
+    @Query("DELETE FROM notes WHERE isDeleted = 1 AND deletedAt < :timestamp")
+    suspend fun deleteOldNotes(timestamp: Long)
+
+    // --- История заметок ---
+    @Insert
+    suspend fun insertHistory(history: NoteHistoryEntity)
+
+    @Query("SELECT * FROM note_history WHERE noteId = :noteId ORDER BY timestamp DESC")
+    suspend fun getHistoryForNote(noteId: Int): List<NoteHistoryEntity>
+
+    @Query("DELETE FROM note_history WHERE noteId = :noteId")
+    suspend fun deleteHistoryForNote(noteId: Int)
+
+    // --- Задачи ---
+    @Query("SELECT * FROM tasks WHERE isDeleted = 0 ORDER BY id DESC")
+    suspend fun getAllTasks(): List<TaskEntity>
+
+    @Query("SELECT * FROM tasks WHERE isDeleted = 1")
+    suspend fun getTrashTasks(): List<TaskEntity>
+
+    @Insert
+    suspend fun insertTask(task: TaskEntity)
+
+    @Update
+    suspend fun updateTask(task: TaskEntity)
+
+    @Delete
+    suspend fun deleteTask(task: TaskEntity)
+
+    @Query("DELETE FROM tasks WHERE isDeleted = 1")
+    suspend fun clearTasksTrash()
+
+    @Query("DELETE FROM tasks WHERE isDeleted = 1 AND deletedAt < :timestamp")
+    suspend fun deleteOldTasks(timestamp: Long)
 }

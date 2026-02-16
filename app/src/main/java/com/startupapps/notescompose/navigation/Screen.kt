@@ -8,6 +8,9 @@ sealed class Screen {
     data object Main : Screen()
 
     @Serializable
+    data class Trash(val isNotes: Boolean) : Screen()
+
+    @Serializable
     data class Edit(val id: Int?) : Screen()
 
     @Serializable
