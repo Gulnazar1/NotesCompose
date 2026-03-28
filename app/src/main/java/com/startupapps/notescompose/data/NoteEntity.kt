@@ -11,5 +11,7 @@ data class NoteEntity(
     val text: String,
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null,
-    val isPinned: Boolean = false // --закрепит--
+    val isPinned: Boolean = false,
+    val label: String = "",
+    val color: Int = 0xFFFFFFFF.toInt()
 )

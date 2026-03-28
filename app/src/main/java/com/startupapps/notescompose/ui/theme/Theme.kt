@@ -1,66 +1,59 @@
 package com.startupapps.notescompose.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+
+// Professional Slate & Indigo Palette
+val Slate900 = Color(0xFF0F172A) // Dark background
+val Slate800 = Color(0xFF1E293B) // Dark surface
+val Slate700 = Color(0xFF334155) // Surface variant
+val Slate100 = Color(0xFFF1F5F9) // Light background
+val Indigo600 = Color(0xFF4F46E5) // Primary Action
+val Indigo700 = Color(0xFF4338CA) // Primary Dark
+val Sky500 = Color(0xFF0EA5E9)   // Secondary
+val Rose500 = Color(0xFFF43F5E)  // Error/Accent
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFFFC107),
-    secondary = Color(0xFFFFD54F),
-    tertiary = Color(0xFFFFE082),
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onPrimary = Color.Black,
-    onSurface = Color.White
+    primary = Indigo600,
+    onPrimary = Color.White,
+    secondary = Sky500,
+    onSecondary = Color.White,
+    tertiary = Rose500,
+    background = Slate900,
+    onBackground = Slate100,
+    surface = Slate800,
+    onSurface = Slate100,
+    surfaceVariant = Slate700,
+    onSurfaceVariant = Color.White.copy(alpha = 0.7f),
+    outline = Slate700
 )
 
-
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFFFFC107),
-    secondary = Color(0xFFFFD54F),
-    tertiary = Color(0xFFFFE082),
-    background = Color(0xFFFFFBF0),
-    surface = Color(0xFFFFFFFF),
-    onPrimary = Color.Black,
-    onSurface = Color(0xFF3E2723)
-
-
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Indigo600,
     onPrimary = Color.White,
+    secondary = Sky500,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    tertiary = Rose500,
+    background = Color.White,
+    onBackground = Slate900,
+    surface = Slate100,
+    onSurface = Slate900,
+    surfaceVariant = Color(0xFFE2E8F0),
+    onSurfaceVariant = Slate800,
+    outline = Color(0xFFCBD5E1)
 )
 
 @Composable
 fun NotesComposeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = false, // Отключаем динамические цвета для сохранения стиля
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

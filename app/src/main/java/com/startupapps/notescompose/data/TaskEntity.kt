@@ -11,5 +11,6 @@ data class TaskEntity(
     val isCompleted: Boolean = false,
     val reminderTime: Long? = null,
     val isDeleted: Boolean = false,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
+    val priority: Int = 0 // 0: Оддӣ, 1: Миёна, 2: Муҳим ✅
 )

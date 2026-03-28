@@ -1,93 +1,101 @@
 package com.startupapps.notescompose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.startupapps.notescompose.data.NoteHistoryEntity
-import kotlinx.coroutines.launch
+import com.startupapps.notescompose.navigation.RootComponent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(
-    initialTitle: String,
-    initialText: String,
-    history: List<NoteHistoryEntity>,
-    onLoadHistory: () -> Unit,
-    onRestoreVersion: (NoteHistoryEntity) -> Unit,
-    onSave: (String, String) -> Unit,
-    onDelete: () -> Unit,
-    onBack: () -> Unit
-) {
-    val title = remember(initialTitle) { mutableStateOf(initialTitle) }
-    val text = remember(initialText) { mutableStateOf(initialText) }
-    var showHistory by remember { mutableStateOf(false) }
+fun DetailScreen(component: RootComponent.DetailComponent) {
+    val state by component.state.collectAsState()
+    val note = remember(state.notes) { state.notes.find { it.id == component.noteId } }
+    
+    if (note == null) {
+        LaunchedEffect(Unit) { component.onBack() }
+        return
+    }
 
-    val hasChanges = title.value != initialTitle || text.value != initialText
-    val canSave = hasChanges && (title.value.isNotBlank() || text.value.isNotBlank())
+    var title by remember { mutableStateOf(note.title) }
+    var text by remember { mutableStateOf(note.text) }
+    var label by remember { mutableStateOf(note.label) }
+    var selectedColor by remember { mutableStateOf(Color(note.color)) }
+
+    var showHistory by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var showLabelDialog by remember { mutableStateOf(false) }
+
+    val hasChanges = title != note.title || 
+                     text != note.text || 
+                     label != note.label || 
+                     selectedColor.toArgb() != note.color
+
+    val canSave = title.isNotBlank() || text.isNotBlank()
 
     LaunchedEffect(Unit) {
-        onLoadHistory()
+        component.onLoadHistory()
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = selectedColor,
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "Редактирование",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
-                },
+                title = { },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { component.onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showLabelDialog = true }) {
+                        Icon(Icons.Outlined.Label, contentDescription = "Метка")
+                    }
+                    IconButton(onClick = { showColorPicker = true }) {
+                        Icon(Icons.Outlined.Palette, contentDescription = "Цвет")
+                    }
                     IconButton(onClick = { showHistory = true }) {
-                        Icon(Icons.Default.History, contentDescription = "История")
+                        Icon(Icons.Outlined.History, contentDescription = "История")
                     }
-                    IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
+                    IconButton(onClick = { component.onDelete() }) {
+                        Icon(Icons.Default.DeleteOutline, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
                     }
-                    IconButton(
-                        enabled = canSave,
-                        onClick = { onSave(title.value.trim(), text.value.trim()) }
-                    ) {
-                        Icon(
-                            Icons.Default.Check, 
-                            contentDescription = "Сохранить",
-                            tint = if (canSave) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                        )
+                    if (hasChanges && canSave) {
+                        TextButton(
+                            onClick = { component.onSave(title.trim(), text.trim(), label.trim(), selectedColor.toArgb()) }
+                        ) {
+                            Text("Сохранить", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent
                 )
             )
         }
@@ -96,84 +104,105 @@ fun DetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedTextField(
-                value = title.value,
-                onValueChange = { title.value = it },
-                label = { Text("Заголовок") },
-                placeholder = { Text("Введите заголовок") },
-                singleLine = false,
-                maxLines = 2,
-                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 24.sp),
-                modifier = Modifier.fillMaxWidth()
+            if (label.isNotBlank()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable { showLabelDialog = true }
+                ) {
+                    Text(
+                        text = label,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            TextField(
+                value = title,
+                onValueChange = { title = it },
+                placeholder = { Text("Заголовок", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
+                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                )
             )
 
-            OutlinedTextField(
-                value = text.value,
-                onValueChange = { text.value = it },
-                label = { Text("Текст заметки") },
-                placeholder = { Text("Начните писать...") },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f),
-                maxLines = Int.MAX_VALUE
+            TextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text("Заметка...", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 28.sp),
+                modifier = Modifier.fillMaxSize().weight(1f),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                )
             )
         }
 
         if (showHistory) {
             ModalBottomSheet(
                 onDismissRequest = { showHistory = false },
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                tonalElevation = 8.dp,
-                dragHandle = { BottomSheetDefaults.DragHandle() }
+                containerColor = MaterialTheme.colorScheme.surface
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 40.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 20.dp)
-                    ) {
-                        Icon(Icons.Default.History, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "История изменений",
-                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold)
-                        )
-                    }
+                HistoryContent(state.noteHistory) { version ->
+                    title = version.title
+                    text = version.text
+                    component.onRestoreVersion(version)
+                    showHistory = false
+                }
+            }
+        }
 
-                    if (history.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().height(150.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("История пуста", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-                                Text("Версии появятся после обновлений", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                            }
-                        }
-                    } else {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            items(history) { version ->
-                                HistoryItem(
-                                    version = version,
-                                    onRestore = {
-                                        onRestoreVersion(version)
-                                        showHistory = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+        if (showColorPicker) {
+            ModalBottomSheet(onDismissRequest = { showColorPicker = false }) {
+                ColorPickerContent(selectedColor) { color ->
+                    selectedColor = color
+                    showColorPicker = false
+                }
+            }
+        }
+
+        if (showLabelDialog) {
+            LabelDialog(
+                initialLabel = label,
+                onDismiss = { showLabelDialog = false },
+                onConfirm = { 
+                    label = it
+                    showLabelDialog = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun HistoryContent(history: List<NoteHistoryEntity>, onRestore: (NoteHistoryEntity) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+        Text(
+            "История изменений", 
+            modifier = Modifier.padding(20.dp),
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+        )
+        if (history.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
+                Text("Версий пока нет", color = Color.Gray)
+            }
+        } else {
+            LazyColumn(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(history) { version ->
+                    HistoryItem(version, onRestore)
                 }
             }
         }
@@ -181,78 +210,76 @@ fun DetailScreen(
 }
 
 @Composable
-fun HistoryItem(version: NoteHistoryEntity, onRestore: () -> Unit) {
+fun ColorPickerContent(currentColor: Color, onColorSelected: (Color) -> Unit) {
+    Column(modifier = Modifier.padding(20.dp).padding(bottom = 32.dp)) {
+        Text("Цвет заметки", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(NoteColors) { color ->
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(
+                            width = if (currentColor == color) 3.dp else 1.dp,
+                            color = if (currentColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.5f),
+                            shape = CircleShape
+                        )
+                        .clickable { onColorSelected(color) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LabelDialog(initialLabel: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var text by remember { mutableStateOf(initialLabel) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Метка") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text("Напр. Идеи, Работа") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(text) }) { Text("ОК") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
+        }
+    )
+}
+
+@Composable
+fun HistoryItem(version: NoteHistoryEntity, onRestore: (NoteHistoryEntity) -> Unit) {
     val date = Date(version.timestamp)
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val dateFormat = SimpleDateFormat("dd MMMM", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+    Surface(
+        onClick = { onRestore(version) },
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Timeline Indicator
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(50.dp)
-            ) {
-                Text(
-                    text = timeFormat.format(date),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = dateFormat.format(date),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(timeFormat.format(date), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(dateFormat.format(date), style = MaterialTheme.typography.labelSmall)
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
-            // Content Preview
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = version.title.ifBlank { "Без заголовка" },
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = version.text.ifBlank { "Пустой текст" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Text(version.title.ifBlank { "Без заголовка" }, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(version.text.ifBlank { "Пустой текст" }, maxLines = 1, fontSize = 14.sp, color = Color.Gray)
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Restore Action
-            IconButton(
-                onClick = onRestore,
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Restore,
-                    contentDescription = "Встановит",
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Icon(Icons.Default.Restore, null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
         }
     }
 }

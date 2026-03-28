@@ -44,7 +44,6 @@ android {
 }
 
 dependencies {
-
     implementation("com.google.android.gms:play-services-ads:23.1.0")
 
     // Room
@@ -68,7 +67,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     
-    // Илова кардани иконкаҳои васеъ (Extended Icons) ✅
+    // Библиотекаҳои зарурӣ барои Biometric ва FragmentActivity ✅
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.2")
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation(libs.kotlinx.serialization.json)

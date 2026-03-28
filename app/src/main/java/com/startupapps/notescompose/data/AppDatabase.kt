@@ -3,8 +3,8 @@ package com.startupapps.notescompose.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-// Версияи 8 шуд, чунки ҷадвали note_history илова шуд
-@Database(entities = [NoteEntity::class, TaskEntity::class, NoteHistoryEntity::class], version = 8)
+// Версияро ба 10 мебардорем, то Room базаро аз нав созад ва майдонҳои навро (label, color, isLocked) қабул кунад
+@Database(entities = [NoteEntity::class, TaskEntity::class, NoteHistoryEntity::class], version = 10)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
 }
