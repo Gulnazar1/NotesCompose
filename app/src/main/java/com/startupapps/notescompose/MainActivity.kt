@@ -12,15 +12,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
-import androidx.room.Room
 import com.arkivanov.decompose.defaultComponentContext
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.google.android.gms.ads.MobileAds
-import com.startupapps.notescompose.data.AppDatabase
-import com.startupapps.notescompose.data.NoteRepositoryImpl
-import com.startupapps.notescompose.domain.usecase.*
 import com.startupapps.notescompose.navigation.DefaultRootComponent
 import com.startupapps.notescompose.navigation.RootComponent
 import com.startupapps.notescompose.ui.theme.NotesComposeTheme
@@ -39,35 +35,7 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "notes_db"
-        )
-            .fallbackToDestructiveMigration()
-            .build()
-
-        val repository = NoteRepositoryImpl(db.noteDao())
-
-        val useCases = NoteUseCases(
-            addNote = AddNoteUseCase(repository),
-            updateNote = UpdateNoteUseCase(repository),
-            deleteNote = DeleteNoteUseCase(repository),
-            togglePin = TogglePinUseCase(repository),
-            getAllData = GetAllDataUseCase(repository),
-            moveToTrashNote = MoveToTrashNoteUseCase(repository),
-            restoreNote = RestoreNoteUseCase(repository),
-            clearNotesTrash = ClearNotesTrashUseCase(repository),
-            addTask = AddTaskUseCase(repository),
-            updateTask = UpdateTaskUseCase(repository),
-            moveTaskToTrash = MoveTaskToTrashUseCase(repository),
-            restoreTask = RestoreTaskUseCase(repository),
-            deleteTaskForever = DeleteTaskForeverUseCase(repository),
-            clearTasksTrash = ClearTasksTrashUseCase(repository),
-            loadHistory = LoadHistoryUseCase(repository),
-            restoreVersion = RestoreVersionUseCase(repository),
-            autoDeleteOldItems = AutoDeleteOldItemsUseCase(repository)
-        )
+        val useCases = (application as NotesApp).useCases
 
         val root = DefaultRootComponent(
             componentContext = defaultComponentContext(),
@@ -88,6 +56,7 @@ class MainActivity : ComponentActivity() {
                             when (val child = it.instance) {
                                 is RootComponent.Child.Main -> MainScreen(child.component)
                                 is RootComponent.Child.Trash -> TrashScreen(child.component)
+                                is RootComponent.Child.Archive -> ArchiveScreen(child.component, onBack = { child.component.onBack() })
                                 is RootComponent.Child.Edit -> EditScreen(child.component)
                                 is RootComponent.Child.Detail -> DetailScreen(child.component)
                             }

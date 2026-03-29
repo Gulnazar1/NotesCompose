@@ -3,6 +3,8 @@ package com.startupapps.notescompose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -18,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +49,7 @@ fun EditScreen(component: RootComponent.EditComponent) {
     var title by remember { mutableStateOf("") }
     var text by remember { mutableStateOf("") }
     var label by remember { mutableStateOf("") }
-    var selectedColor by remember { mutableStateOf(NoteColors[0]) }
+    var selectedColor by remember { mutableStateOf<Color>(NoteColors[0]) }
     
     var showColorPicker by remember { mutableStateOf(false) }
     var showLabelDialog by remember { mutableStateOf(false) }
@@ -57,31 +60,24 @@ fun EditScreen(component: RootComponent.EditComponent) {
         containerColor = selectedColor,
         topBar = {
             TopAppBar(
-                title = { Text("Новая заметка", style = MaterialTheme.typography.titleMedium) },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = { component.onBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showLabelDialog = true }) {
-                        Icon(Icons.Outlined.Label, contentDescription = "Метка")
-                    }
-                    IconButton(onClick = { showColorPicker = true }) {
-                        Icon(Icons.Outlined.Palette, contentDescription = "Цвет")
-                    }
+                    IconButton(onClick = { showLabelDialog = true }) { Icon(Icons.Outlined.Label, null) }
+                    IconButton(onClick = { showColorPicker = true }) { Icon(Icons.Outlined.Palette, null) }
                     if (canSave) {
                         TextButton(
                             onClick = { component.onSave(title.trim(), text.trim(), label.trim(), selectedColor.toArgb()) }
                         ) {
-                            Text("Создать", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text("Создать", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
@@ -89,20 +85,19 @@ fun EditScreen(component: RootComponent.EditComponent) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (label.isNotBlank()) {
                 Surface(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = CircleShape,
                     modifier = Modifier.clickable { showLabelDialog = true }
                 ) {
                     Text(
                         text = label,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.primary
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     )
                 }
             }
@@ -113,13 +108,11 @@ fun EditScreen(component: RootComponent.EditComponent) {
                 placeholder = { 
                     Text(
                         "Заголовок", 
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                        )
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                     ) 
                 },
-                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
@@ -135,12 +128,11 @@ fun EditScreen(component: RootComponent.EditComponent) {
                 placeholder = { 
                     Text(
                         "Начните писать...", 
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                        )
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                     ) 
                 },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 28.sp),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp),
                 modifier = Modifier.fillMaxSize().weight(1f),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
@@ -152,61 +144,16 @@ fun EditScreen(component: RootComponent.EditComponent) {
         }
 
         if (showColorPicker) {
-            ModalBottomSheet(
-                onDismissRequest = { showColorPicker = false },
-                containerColor = MaterialTheme.colorScheme.surface
-            ) {
-                Column(modifier = Modifier.padding(20.dp).padding(bottom = 32.dp)) {
-                    Text("Выберите цвет", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(NoteColors) { color ->
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(color)
-                                    .border(
-                                        width = if (selectedColor == color) 3.dp else 1.dp,
-                                        color = if (selectedColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.5f),
-                                        shape = CircleShape
-                                    )
-                                    .clickable { 
-                                        selectedColor = color
-                                        showColorPicker = false
-                                    }
-                            )
-                        }
-                    }
+            ModalBottomSheet(onDismissRequest = { showColorPicker = false }) {
+                ColorPickerContent(selectedColor) { color ->
+                    selectedColor = color
+                    showColorPicker = false
                 }
             }
         }
 
         if (showLabelDialog) {
-            var labelText by remember { mutableStateOf(label) }
-            AlertDialog(
-                onDismissRequest = { showLabelDialog = false },
-                title = { Text("Добавить метку") },
-                text = {
-                    OutlinedTextField(
-                        value = labelText,
-                        onValueChange = { labelText = it },
-                        placeholder = { Text("Напр. Работа, Идеи") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        label = labelText
-                        showLabelDialog = false
-                    }) { Text("ОК") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showLabelDialog = false }) { Text("Отмена") }
-                }
-            )
+            LabelDialog(initialLabel = label, onDismiss = { showLabelDialog = false }, onConfirm = { label = it; showLabelDialog = false })
         }
     }
 }

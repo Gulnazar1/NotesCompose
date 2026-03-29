@@ -35,6 +35,7 @@ class NoteStoreFactory(
     private sealed class Msg {
         data class Loaded(
             val notes: List<NoteEntity>,
+            val archivedNotes: List<NoteEntity>,
             val trashNotes: List<NoteEntity>,
             val tasks: List<TaskEntity>,
             val trashTasks: List<TaskEntity>
@@ -55,20 +56,16 @@ class NoteStoreFactory(
         override fun executeIntent(intent: NoteStore.Intent, getState: () -> NoteStore.State) {
             when (intent) {
                 is NoteStore.Intent.Load -> loadAll()
-                is NoteStore.Intent.Add -> scope.launch { 
-                    useCases.addNote(intent.title, intent.text, intent.label, intent.color)
-                    loadAll() 
-                }
-                is NoteStore.Intent.Update -> scope.launch { 
-                    useCases.updateNote(intent.note, intent.title, intent.text, intent.label, intent.color)
-                    loadAll() 
-                }
+                is NoteStore.Intent.Add -> scope.launch { useCases.addNote(intent.title, intent.text, intent.label, intent.color); loadAll() }
+                is NoteStore.Intent.Update -> scope.launch { useCases.updateNote(intent.note, intent.title, intent.text, intent.label, intent.color); loadAll() }
                 is NoteStore.Intent.MoveToTrash -> scope.launch { useCases.moveToTrashNote(intent.note); loadAll() }
                 is NoteStore.Intent.Restore -> scope.launch { useCases.restoreNote(intent.note); loadAll() }
                 is NoteStore.Intent.DeleteForever -> scope.launch { useCases.deleteNote(intent.note); loadAll() }
                 is NoteStore.Intent.TogglePin -> togglePin(intent.note)
+                is NoteStore.Intent.ToggleArchive -> scope.launch { useCases.toggleArchive(intent.note); loadAll() }
+                is NoteStore.Intent.SetReminder -> scope.launch { useCases.setReminder(intent.note, intent.time); loadAll() }
                 is NoteStore.Intent.DismissPremiumDialog -> dispatch(Msg.ShowPremiumDialog(false))
-                is NoteStore.Intent.AddTask -> scope.launch { useCases.addTask(intent.text, intent.reminderTime); loadAll() }
+                is NoteStore.Intent.AddTask -> scope.launch { useCases.addTask(intent.text, intent.reminderTime, intent.priority); loadAll() }
                 is NoteStore.Intent.UpdateTask -> scope.launch { useCases.updateTask(intent.task); loadAll() }
                 is NoteStore.Intent.MoveTaskToTrash -> scope.launch { useCases.moveTaskToTrash(intent.task); loadAll() }
                 is NoteStore.Intent.RestoreTask -> scope.launch { useCases.restoreTask(intent.task); loadAll() }
@@ -101,7 +98,7 @@ class NoteStoreFactory(
             scope.launch(Dispatchers.IO) {
                 val data = useCases.getAllData()
                 withContext(Dispatchers.Main) {
-                    dispatch(Msg.Loaded(data.notes, data.trashNotes, data.tasks, data.trashTasks))
+                    dispatch(Msg.Loaded(data.notes, data.archivedNotes, data.trashNotes, data.tasks, data.trashTasks))
                 }
             }
         }
@@ -130,7 +127,13 @@ class NoteStoreFactory(
     private object ReducerImpl : com.arkivanov.mvikotlin.core.store.Reducer<NoteStore.State, Msg> {
         override fun NoteStore.State.reduce(msg: Msg): NoteStore.State =
             when (msg) {
-                is Msg.Loaded -> copy(notes = msg.notes, trashNotes = msg.trashNotes, tasks = msg.tasks, trashTasks = msg.trashTasks)
+                is Msg.Loaded -> copy(
+                    notes = msg.notes, 
+                    archivedNotes = msg.archivedNotes, 
+                    trashNotes = msg.trashNotes, 
+                    tasks = msg.tasks, 
+                    trashTasks = msg.trashTasks
+                )
                 is Msg.ShowPremiumDialog -> copy(showPremiumDialog = msg.show)
                 is Msg.LayoutToggled -> copy(isGridLayout = msg.isGridLayout)
                 is Msg.FontSizeChanged -> copy(fontSize = msg.size)

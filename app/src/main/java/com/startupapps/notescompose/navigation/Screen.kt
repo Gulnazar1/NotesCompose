@@ -11,6 +11,9 @@ sealed class Screen {
     data class Trash(val isNotes: Boolean) : Screen()
 
     @Serializable
+    data object Archive : Screen() // ✅ Иловаи экрани Архив
+
+    @Serializable
     data class Edit(val id: Int?) : Screen()
 
     @Serializable

@@ -25,6 +25,7 @@ interface RootComponent {
     sealed class Child {
         class Main(val component: MainComponent) : Child()
         class Trash(val component: TrashComponent) : Child()
+        class Archive(val component: MainComponent) : Child()
         class Edit(val component: EditComponent) : Child()
         class Detail(val component: DetailComponent) : Child()
     }
@@ -33,16 +34,19 @@ interface RootComponent {
         val state: StateFlow<NoteStore.State>
         fun onAddNote()
         fun onOpenTrash(isNotes: Boolean)
+        fun onOpenArchive()
         fun onClickNote(id: Int)
         fun onTogglePin(note: NoteEntity)
+        fun onToggleArchive(note: NoteEntity)
         fun onDeleteNote(note: NoteEntity)
         fun onDismissPremiumDialog()
-        fun onAddTask(text: String, time: Long?, priority: Int) // Иловаи priority ✅
+        fun onAddTask(text: String, time: Long?, priority: Int)
         fun onUpdateTask(task: TaskEntity)
         fun onDeleteTask(task: TaskEntity)
         fun onToggleLayout()
         fun onChangeFontSize(size: Float)
         fun onSelectTab(index: Int)
+        fun onBack() // ✅ Илова шуд
     }
 
     interface TrashComponent {
@@ -100,6 +104,7 @@ class DefaultRootComponent(
         when (screen) {
             is Screen.Main -> RootComponent.Child.Main(createMainComponent(childContext))
             is Screen.Trash -> RootComponent.Child.Trash(createTrashComponent(childContext, screen.isNotes))
+            is Screen.Archive -> RootComponent.Child.Archive(createMainComponent(childContext))
             is Screen.Edit -> RootComponent.Child.Edit(createEditComponent(childContext, screen.id))
             is Screen.Detail -> RootComponent.Child.Detail(createDetailComponent(childContext, screen.id))
         }
@@ -108,17 +113,19 @@ class DefaultRootComponent(
         override val state: StateFlow<NoteStore.State> = store.stateFlow
         override fun onAddNote() = navigation.push(Screen.Edit(null))
         override fun onOpenTrash(isNotes: Boolean) = navigation.push(Screen.Trash(isNotes))
+        override fun onOpenArchive() = navigation.push(Screen.Archive)
         override fun onClickNote(id: Int) = navigation.push(Screen.Detail(id))
         override fun onTogglePin(note: NoteEntity) = store.accept(NoteStore.Intent.TogglePin(note))
+        override fun onToggleArchive(note: NoteEntity) = store.accept(NoteStore.Intent.ToggleArchive(note))
         override fun onDeleteNote(note: NoteEntity) = store.accept(NoteStore.Intent.MoveToTrash(note))
         override fun onDismissPremiumDialog() = store.accept(NoteStore.Intent.DismissPremiumDialog)
-        override fun onAddTask(text: String, time: Long?, priority: Int) = 
-            store.accept(NoteStore.Intent.AddTask(text, time, priority)) // Фиристодани priority ✅
+        override fun onAddTask(text: String, time: Long?, priority: Int) = store.accept(NoteStore.Intent.AddTask(text, time, priority))
         override fun onUpdateTask(task: TaskEntity) = store.accept(NoteStore.Intent.UpdateTask(task))
         override fun onDeleteTask(task: TaskEntity) = store.accept(NoteStore.Intent.MoveTaskToTrash(task))
         override fun onToggleLayout() = store.accept(NoteStore.Intent.ToggleLayout)
         override fun onChangeFontSize(size: Float) = store.accept(NoteStore.Intent.ChangeFontSize(size))
         override fun onSelectTab(index: Int) = store.accept(NoteStore.Intent.SelectTab(index))
+        override fun onBack() = navigation.pop() // ✅
     }
 
     private fun createTrashComponent(childContext: ComponentContext, _isNotes: Boolean) = object : RootComponent.TrashComponent {

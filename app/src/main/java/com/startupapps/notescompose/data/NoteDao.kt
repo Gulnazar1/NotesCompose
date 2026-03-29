@@ -9,8 +9,13 @@ import androidx.room.Update
 @Dao
 interface NoteDao{
     // --- Заметки ---
-    @Query("SELECT * FROM notes WHERE isDeleted = 0 ORDER BY isPinned DESC, id DESC")
+    // Акнун мо қайдҳоеро мегирем, ки на нест шудаанд ва на архив шудаанд ✅
+    @Query("SELECT * FROM notes WHERE isDeleted = 0 AND isArchived = 0 ORDER BY isPinned DESC, id DESC")
     suspend fun getAllNotes(): List<NoteEntity>
+
+    // Қайдҳои архившуда ✅
+    @Query("SELECT * FROM notes WHERE isArchived = 1 AND isDeleted = 0 ORDER BY id DESC")
+    suspend fun getArchivedNotes(): List<NoteEntity>
 
     @Query("SELECT * FROM notes WHERE isDeleted = 1")
     suspend fun getTrashNotes(): List<NoteEntity>

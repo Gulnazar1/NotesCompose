@@ -12,6 +12,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,9 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Alarm
-import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +32,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,26 +53,20 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun TasksContent(
     component: RootComponent.MainComponent,
-    bottomPadding: Dp
+    showAddDialog: Boolean,
+    onDismissAddDialog: () -> Unit
 ) {
     val state by component.state.collectAsState()
     val context = LocalContext.current
-    
     var searchQuery by remember { mutableStateOf("") }
-    var showSettings by remember { mutableStateOf(false) }
-    var showAddDialog by remember { mutableStateOf(false) }
 
-    // Таймери зинда барои навсозии ҳар сония ✅
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(1000) // Ҳар 1 сония нав мешавад
+            delay(1000)
             currentTime = System.currentTimeMillis()
         }
     }
-
-    val listState = rememberLazyListState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     val filteredTasks = remember(state.tasks, searchQuery) {
         if (searchQuery.isEmpty()) state.tasks else state.tasks.filter {
@@ -81,66 +74,31 @@ fun TasksContent(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LargeTopAppBar(
-                title = { 
-                    Text("Задачи", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineLarge) 
-                },
-                actions = {
-                    IconButton(onClick = { component.onOpenTrash(false) }) {
-                        Icon(Icons.Outlined.DeleteOutline, null, tint = MaterialTheme.colorScheme.primary)
-                    }
-                    IconButton(onClick = { showSettings = true }) {
-                        Icon(Icons.Outlined.Settings, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                scrollBehavior = scrollBehavior
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TaskSearchBar(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                onClear = { searchQuery = "" }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .padding(bottom = 92.dp)
-                    .shadow(12.dp, RoundedCornerShape(16.dp))
-            ) { Icon(Icons.Default.Add, null, modifier = Modifier.size(28.dp)) }
         }
-    ) { padding ->
-        LazyColumn(
-            state = listState,
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())
-        ) {
-            item {
-                SearchBarDesign(
-                    value = searchQuery, 
-                    onValueChange = { searchQuery = it }, 
-                    onClear = { searchQuery = "" },
-                    hint = "Поиск в задачах..."
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
 
-            if (filteredTasks.isEmpty()) {
-                item { EmptyTasksState(onAdd = { showAddDialog = true }) }
-            } else {
+        if (filteredTasks.isEmpty() && searchQuery.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                EmptyTasksState()
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
                 items(filteredTasks, key = { it.id }) { task ->
-                    TaskItem(
+                    PremiumTaskItem(
                         task = task,
                         fontSize = state.fontSize,
-                        currentTime = currentTime, // Фиристодани вақти ҳозира ✅
-                        onCheckedChange = { isChecked -> component.onUpdateTask(task.copy(isCompleted = isChecked)) },
+                        currentTime = currentTime,
+                        onCheckedChange = { component.onUpdateTask(task.copy(isCompleted = it)) },
                         onDelete = { component.onDeleteTask(task) }
                     )
                 }
@@ -149,79 +107,68 @@ fun TasksContent(
 
         if (showAddDialog) {
             AddTaskDialog(
-                onDismiss = { showAddDialog = false },
+                onDismiss = onDismissAddDialog,
                 onConfirm = { text, time, priority ->
                     component.onAddTask(text, time, priority)
-                    if (time != null) {
-                        scheduleNotification(context, text, time)
-                    }
-                    showAddDialog = false
+                    if (time != null) scheduleNotification(context, text, time)
+                    onDismissAddDialog()
                 }
-            )
-        }
-
-        if (showSettings) {
-            SettingsSheet(
-                onDismiss = { showSettings = false },
-                isGridLayout = state.isGridLayout,
-                onToggleLayout = { component.onToggleLayout() },
-                fontSize = state.fontSize,
-                onChangeFontSize = { component.onChangeFontSize(it) }
             )
         }
     }
 }
 
 @Composable
-fun TaskItem(
-    task: TaskEntity, 
-    fontSize: Float, 
-    currentTime: Long, 
-    onCheckedChange: (Boolean) -> Unit, 
+fun PremiumTaskItem(
+    task: TaskEntity,
+    fontSize: Float,
+    currentTime: Long,
+    onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.98f else 1f)
+
     val priorityColor = when(task.priority) {
-        2 -> Color(0xFFF44336) // High
-        1 -> Color(0xFFFFB300) // Medium
-        else -> MaterialTheme.colorScheme.primary // Low
+        2 -> Color(0xFFF44336)
+        1 -> Color(0xFFFFB300)
+        else -> MaterialTheme.colorScheme.primary
     }
-
-    val containerColor = if (task.isCompleted) 
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f) 
-    else 
-        MaterialTheme.colorScheme.surface
-
-    val alphaValue by animateFloatAsState(if (task.isCompleted) 0.5f else 1f, label = "TaskAlpha")
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(if (task.isCompleted) 0.dp else 2.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+            .scale(scale)
+            .shadow(4.dp, RoundedCornerShape(20.dp))
+            .clickable(interactionSource = interactionSource, indication = null) { },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (task.isCompleted) MaterialTheme.colorScheme.surfaceVariant.copy(0.3f) else MaterialTheme.colorScheme.surface
+        ),
         border = if (!task.isCompleted) BorderStroke(1.dp, priorityColor.copy(alpha = 0.2f)) else null
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
-                checked = task.isCompleted, 
+                checked = task.isCompleted,
                 onCheckedChange = onCheckedChange,
                 colors = CheckboxDefaults.colors(checkedColor = priorityColor)
             )
             
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.text,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = fontSize.sp,
-                        fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.SemiBold
+                        fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.Bold
                     ),
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alphaValue),
+                    color = MaterialTheme.colorScheme.onSurface.copy(if (task.isCompleted) 0.5f else 1f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -229,100 +176,58 @@ fun TaskItem(
                 if (task.reminderTime != null) {
                     val diff = task.reminderTime - currentTime
                     val isOverdue = diff < 0 && !task.isCompleted
-                    val isUrgent = diff in 0..300000 // Камтар аз 5 дақиқа ✅
-                    val isVeryClose = diff in 0..3600000 // Камтар аз 1 соат
                     
-                    val timerColor = when {
-                        isOverdue -> Color.Red
-                        isUrgent -> Color(0xFFF44336)
-                        isVeryClose -> Color(0xFFFFB300)
-                        else -> MaterialTheme.colorScheme.primary
-                    }
-
-                    // Аниматсияи пульсация барои ҳолатҳои таъҷилӣ ✅
-                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                    val pulseScale by infiniteTransition.animateFloat(
-                        initialValue = 1f,
-                        targetValue = if (isUrgent) 1.05f else 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(500, easing = LinearEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "scale"
-                    )
-
-                    Surface(
-                        modifier = Modifier
-                            .padding(top = 6.dp)
-                            .alpha(alphaValue)
-                            .scale(pulseScale),
-                        color = timerColor.copy(alpha = if (isUrgent) 0.2f else 0.05f),
-                        shape = RoundedCornerShape(8.dp),
-                        border = if (isUrgent) BorderStroke(1.dp, timerColor.copy(alpha = 0.5f)) else null
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 6.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically, 
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isVeryClose) Icons.Default.Timer else Icons.Outlined.Alarm, 
-                                contentDescription = null, 
-                                modifier = Modifier.size(if (isUrgent) 18.dp else 14.dp),
-                                tint = timerColor
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (isOverdue) "Время истекло" else getTimeLeftText(task.reminderTime, currentTime),
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = if (isUrgent) FontWeight.ExtraBold else FontWeight.Bold,
-                                    fontSize = if (isUrgent) 14.sp else 11.sp
-                                ),
-                                color = timerColor
-                            )
-                        }
+                        Icon(
+                            Icons.Outlined.Alarm, null, 
+                            modifier = Modifier.size(14.dp),
+                            tint = if (isOverdue) Color.Red else MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isOverdue) "Время истекло" else getTimeLeftText(task.reminderTime, currentTime),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = if (isOverdue) Color.Red else MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
             
-            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Outlined.DeleteOutline, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(20.dp))
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Outlined.DeleteOutline, null, tint = MaterialTheme.colorScheme.onSurface.copy(0.2f), modifier = Modifier.size(20.dp))
             }
         }
     }
 }
 
-fun getTimeLeftText(reminderTime: Long, currentTime: Long): String {
-    val diff = reminderTime - currentTime
-    if (diff <= 0) return "Время истекло"
-
-    val days = TimeUnit.MILLISECONDS.toDays(diff)
-    val hours = TimeUnit.MILLISECONDS.toHours(diff) % 24
-    val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
-    val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
-
-    return when {
-        days > 0 -> "Осталось: $days дн. $hours ч."
-        hours > 0 -> "Осталось: $hours ч. $minutes мин."
-        minutes > 0 -> "Срочно: $minutes мин. $seconds сек." // Сонияҳо пайдо шуданд ✅
-        else -> "ОСТАЛОСЬ: $seconds СЕК!" // Сонияҳои охирин калонтар ✅
+@Composable
+fun TaskSearchBar(value: String, onValueChange: (String) -> Unit, onClear: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(0.4f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        TextField(
+            value = value, onValueChange = onValueChange,
+            placeholder = { Text("Поиск задач...") },
+            leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.primary) },
+            trailingIcon = { if (value.isNotEmpty()) IconButton(onClick = onClear) { Icon(Icons.Default.Close, null) } },
+            colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
     }
 }
 
 @Composable
-fun EmptyTasksState(onAdd: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 60.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+fun EmptyTasksState() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(100.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Ваш список задач пуст", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onAdd, shape = RoundedCornerShape(12.dp)) {
-            Icon(Icons.Default.Add, null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Создать задачу")
-        }
+        Text("Ваш список задач пуст", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
     }
 }
 
@@ -368,7 +273,7 @@ fun AddTaskDialog(onDismiss: () -> Unit, onConfirm: (String, Long?, Int) -> Unit
                         border = BorderStroke(1.dp, if (isSelected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(label, modifier = Modifier.padding(vertical = 8.dp), textAlign = TextAlign.Center, 
+                        Text(label, modifier = Modifier.padding(vertical = 8.dp), textAlign = TextAlign.Center,
                              fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (isSelected) color else MaterialTheme.colorScheme.onSurface)
                     }
                 }
@@ -401,12 +306,33 @@ fun AddTaskDialog(onDismiss: () -> Unit, onConfirm: (String, Long?, Int) -> Unit
     }
 }
 
+fun getTimeLeftText(reminderTime: Long, currentTime: Long): String {
+    val diff = reminderTime - currentTime
+    if (diff <= 0) return "Время истекло"
+
+    val days = TimeUnit.MILLISECONDS.toDays(diff)
+    val hours = TimeUnit.MILLISECONDS.toHours(diff) % 24
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(diff) % 60
+
+    return when {
+        days > 0 -> "Осталось: $days дн. $hours ч."
+        hours > 0 -> "Осталось: $hours ч. $minutes мин."
+        minutes > 0 -> "Срочно: $minutes мин. $seconds сек."
+        else -> "ОСТАЛОСЬ: $seconds СЕК!"
+    }
+}
+
 fun showDateTimePicker(context: Context, onTimeSelected: (Long) -> Unit) {
     val calendar = Calendar.getInstance()
     DatePickerDialog(context, { _, year, month, dayOfMonth ->
-        calendar.set(Calendar.YEAR, year); calendar.set(Calendar.MONTH, month); calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+        calendar.set(Calendar.YEAR, year)
+        calendar.set(Calendar.MONTH, month)
+        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
         TimePickerDialog(context, { _, hourOfDay, minute ->
-            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay); calendar.set(Calendar.MINUTE, minute); calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+            calendar.set(Calendar.MINUTE, minute)
+            calendar.set(Calendar.SECOND, 0)
             onTimeSelected(calendar.timeInMillis)
         }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
     }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()

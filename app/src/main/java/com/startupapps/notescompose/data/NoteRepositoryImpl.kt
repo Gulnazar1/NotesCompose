@@ -8,6 +8,7 @@ class NoteRepositoryImpl(
     
     // Notes
     override suspend fun getAllNotes(): List<NoteEntity> = dao.getAllNotes()
+    override suspend fun getArchivedNotes(): List<NoteEntity> = dao.getArchivedNotes() // ✅
     override suspend fun getTrashNotes(): List<NoteEntity> = dao.getTrashNotes()
     override suspend fun insertNote(note: NoteEntity) = dao.insertNote(note)
     override suspend fun updateNote(note: NoteEntity) = dao.updateNote(note)

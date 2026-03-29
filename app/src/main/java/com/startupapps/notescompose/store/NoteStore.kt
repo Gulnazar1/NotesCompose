@@ -26,6 +26,8 @@ interface NoteStore : Store<NoteStore.Intent, NoteStore.State, Nothing> {
         data class Restore(val note: NoteEntity) : Intent()
         data class DeleteForever(val note: NoteEntity) : Intent()
         data class TogglePin(val note: NoteEntity) : Intent()
+        data class ToggleArchive(val note: NoteEntity) : Intent() // ✅ Архив
+        data class SetReminder(val note: NoteEntity, val time: Long?) : Intent() // ✅ Ремайндер барои қайдҳо
         data object DismissPremiumDialog : Intent()
 
         // --- Intents барои Задачи ---
@@ -53,6 +55,7 @@ interface NoteStore : Store<NoteStore.Intent, NoteStore.State, Nothing> {
 
     data class State(
         val notes: List<NoteEntity> = emptyList(),
+        val archivedNotes: List<NoteEntity> = emptyList(), // ✅ Қайдҳои архившуда
         val trashNotes: List<NoteEntity> = emptyList(),
         val tasks: List<TaskEntity> = emptyList(),
         val trashTasks: List<TaskEntity> = emptyList(),

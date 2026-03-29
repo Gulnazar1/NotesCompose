@@ -7,6 +7,7 @@ import com.startupapps.notescompose.data.TaskEntity
 interface NoteRepository {
     // Notes
     suspend fun getAllNotes(): List<NoteEntity>
+    suspend fun getArchivedNotes(): List<NoteEntity> // ✅
     suspend fun getTrashNotes(): List<NoteEntity>
     suspend fun insertNote(note: NoteEntity)
     suspend fun updateNote(note: NoteEntity)
