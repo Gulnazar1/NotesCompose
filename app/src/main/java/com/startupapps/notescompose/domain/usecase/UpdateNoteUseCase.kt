@@ -11,9 +11,10 @@ class UpdateNoteUseCase(private val repository: NoteRepository) {
         newTitle: String, 
         newText: String, 
         label: String = "", 
-        color: Int = 0xFFFFFFFF.toInt()
+        color: Int = 0xFFFFFFFF.toInt(),
+        imageUri: String? = null
     ) {
-        if (note.title != newTitle || note.text != newText || note.label != label || note.color != color) {
+        if (note.title != newTitle || note.text != newText || note.label != label || note.color != color || note.imageUri != imageUri) {
             repository.insertHistory(
                 NoteHistoryEntity(
                     noteId = note.id,
@@ -22,6 +23,14 @@ class UpdateNoteUseCase(private val repository: NoteRepository) {
                 )
             )
         }
-        repository.updateNote(note.copy(title = newTitle, text = newText, label = label, color = color))
+        repository.updateNote(
+            note.copy(
+                title = newTitle, 
+                text = newText, 
+                label = label, 
+                color = color,
+                imageUri = imageUri
+            )
+        )
     }
 }

@@ -1,14 +1,25 @@
 package com.startupapps.notescompose
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
-import android.content.Context
+import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -16,27 +27,60 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.startupapps.notescompose.data.NoteHistoryEntity
 import com.startupapps.notescompose.navigation.RootComponent
-import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +89,7 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
     val note = remember(state.notes) { state.notes.find { it.id == component.noteId } }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val clipboardManager = LocalClipboardManager.current
     
     if (note == null) {
         LaunchedEffect(Unit) { component.onBack() }
@@ -55,14 +100,16 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
     var text by remember { mutableStateOf(note.text) }
     var label by remember { mutableStateOf(note.label) }
     var selectedColor by remember { mutableStateOf<Color>(Color(note.color)) }
-    var reminderTime by remember { mutableStateOf(note.reminderTime) }
 
     var showHistory by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
     var showLabelDialog by remember { mutableStateOf(false) }
 
-    val hasChanges = title != note.title || text != note.text || label != note.label || selectedColor.toArgb() != note.color || reminderTime != note.reminderTime
+    val hasChanges = title != note.title || text != note.text || label != note.label || selectedColor.toArgb() != note.color
     val canSave = title.isNotBlank() || text.isNotBlank()
+
+    val wordCount = if (text.isBlank()) 0 else text.trim().split("\\s+".toRegex()).size
+    val charCount = text.length
 
     LaunchedEffect(Unit) { component.onLoadHistory() }
 
@@ -72,36 +119,35 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = { component.onBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
+                    DetailIconButton(onClick = { component.onBack() }, icon = Icons.AutoMirrored.Filled.ArrowBack)
                 },
                 actions = {
-                    IconButton(onClick = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }) { Icon(Icons.Default.PictureAsPdf, "Export") }
+                    DetailIconButton(onClick = { 
+                        clipboardManager.setText(AnnotatedString(text))
+                        Toast.makeText(context, "Скопировано", Toast.LENGTH_SHORT).show()
+                    }, icon = Icons.Default.ContentCopy)
                     
-                    IconButton(onClick = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-
-                    }) { 
-                        Icon(if (reminderTime != null) Icons.Default.AlarmOn else Icons.Outlined.Alarm, null, tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) 
-                    }
-                    IconButton(onClick = { showLabelDialog = true }) { Icon(Icons.Outlined.Label, null) }
-                    IconButton(onClick = { showColorPicker = true }) { Icon(Icons.Outlined.Palette, null) }
-                    IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, null) }
-                    IconButton(onClick = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        component.onDelete() 
-                    }) { 
-                        Icon(Icons.Default.DeleteOutline, null, tint = MaterialTheme.colorScheme.error) 
-                    }
-                    if (hasChanges && canSave) {
-                        TextButton(onClick = { 
+                    DetailIconButton(onClick = { showLabelDialog = true }, icon = Icons.Outlined.Label)
+                    DetailIconButton(onClick = { showColorPicker = true }, icon = Icons.Outlined.Palette)
+                    DetailIconButton(onClick = { showHistory = true }, icon = Icons.Outlined.History)
+                    DetailIconButton(
+                        onClick = { 
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            component.onSave(title.trim(), text.trim(), label.trim(), selectedColor.toArgb()) 
-                        }) {
-                            Text("Сохранить", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            component.onDelete() 
+                        }, 
+                        icon = Icons.Default.DeleteOutline, 
+                        tint = MaterialTheme.colorScheme.error 
+                    )
+                    if (hasChanges && canSave) {
+                        Button(
+                            onClick = { 
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                component.onSave(title.trim(), text.trim(), label.trim(), selectedColor.toArgb(), null) 
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Text("Захира", fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -109,40 +155,50 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
             )
         },
         bottomBar = {
-            // ✅ Toolbar барои матн (Rich Text)
             Surface(
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
-                tonalElevation = 4.dp,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .navigationBarsPadding()
+                    .shadow(12.dp, RoundedCornerShape(24.dp)),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                tonalElevation = 8.dp
             ) {
                 Row(
                     modifier = Modifier.padding(8.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(onClick = { 
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, "$title\n\n$text")
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, null))
+                    }) { Icon(Icons.Default.Share, "Share") }
+
+                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
+
                     IconButton(onClick = { text += "\n• " }) { Icon(Icons.Default.FormatListBulleted, null) }
                     IconButton(onClick = { text = text.uppercase() }) { Icon(Icons.Default.TextFields, null) }
+                    IconButton(onClick = { text = "" }) { Icon(Icons.Default.ClearAll, null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)) }
                 }
             }
         }
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 24.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (reminderTime != null) {
-                val format = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
-                AssistChip(
-                    onClick = { reminderTime = null },
-                    label = { Text(format.format(Date(reminderTime!!))) },
-                    leadingIcon = { Icon(Icons.Default.Alarm, null, modifier = Modifier.size(16.dp)) },
-                    trailingIcon = { Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp)) }
-                )
-            }
-
             if (label.isNotBlank()) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(0.1f),
-                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = CircleShape,
                     modifier = Modifier.clickable { showLabelDialog = true }
                 ) {
                     Text(
@@ -153,37 +209,51 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                 }
             }
 
-            TextField(
-                value = title,
-                onValueChange = { title = it },
-                placeholder = { Text("Заголовок", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface.copy(0.3f))) },
-                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    placeholder = { Text("Заголовок", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))) },
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
                 )
-            )
+            }
 
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = { Text("Начните писать...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface.copy(0.3f))) },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp),
-                modifier = Modifier.fillMaxSize().weight(1f),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+
+
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxSize().weight(1f)
+            ) {
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = { Text("Начните писать...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))) },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp),
+                    modifier = Modifier.fillMaxSize(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
                 )
-            )
+            }
         }
 
         if (showHistory) {
-            ModalBottomSheet(onDismissRequest = { showHistory = false }) {
+            ModalBottomSheet(onDismissRequest = { showHistory = false }, shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)) {
                 HistoryContent(state.noteHistory) { version ->
                     title = version.title
                     text = version.text
@@ -194,7 +264,7 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
         }
 
         if (showColorPicker) {
-            ModalBottomSheet(onDismissRequest = { showColorPicker = false }) {
+            ModalBottomSheet(onDismissRequest = { showColorPicker = false }, shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)) {
                 ColorPickerContent(selectedColor) { color ->
                     selectedColor = color
                     showColorPicker = false
@@ -208,13 +278,25 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
     }
 }
 
+@Composable
+fun DetailIconButton(onClick: () -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color = LocalContentColor.current) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.85f else 1f, label = "iconScale")
+    
+    IconButton(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        modifier = Modifier.scale(scale)
+    ) {
+        Icon(icon, null, tint = tint)
+    }
+}
 
-
-// Функсияҳои ёрирасон дар поён ҳастанд...
 @Composable
 fun HistoryContent(history: List<NoteHistoryEntity>, onRestore: (NoteHistoryEntity) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
-        Text("История изменений", modifier = Modifier.padding(20.dp), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+        Text("История изменений", modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
         if (history.isEmpty()) {
             Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
                 Text("Версий пока нет", color = Color.Gray)
@@ -231,13 +313,27 @@ fun HistoryContent(history: List<NoteHistoryEntity>, onRestore: (NoteHistoryEnti
 
 @Composable
 fun ColorPickerContent(currentColor: Color, onColorSelected: (Color) -> Unit) {
-    Column(modifier = Modifier.padding(20.dp).padding(bottom = 32.dp)) {
-        Text("Цвет заметки", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-        Spacer(modifier = Modifier.height(16.dp))
+    Column(modifier = Modifier.padding(24.dp).padding(bottom = 32.dp)) {
+        Text("Цвет заметки", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+        Spacer(modifier = Modifier.height(20.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(NoteColors) { color ->
+            items(AppNoteColors) { color ->
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val scale by animateFloatAsState(if (isPressed) 0.9f else 1f, label = "colorScale")
+
                 Box(
-                    modifier = Modifier.size(52.dp).clip(CircleShape).background(color).border(width = if (currentColor == color) 3.dp else 1.dp, color = if (currentColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.5f), shape = CircleShape).clickable { onColorSelected(color) }
+                    modifier = Modifier
+                        .size(56.dp)
+                        .scale(scale)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(
+                            width = if (currentColor == color) 3.dp else 1.dp,
+                            color = if (currentColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.3f),
+                            shape = CircleShape
+                        )
+                        .clickable(interactionSource = interactionSource, indication = null) { onColorSelected(color) }
                 )
             }
         }
@@ -249,10 +345,24 @@ fun LabelDialog(initialLabel: String, onDismiss: () -> Unit, onConfirm: (String)
     var text by remember { mutableStateOf(initialLabel) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Метка") },
-        text = { OutlinedTextField(value = text, onValueChange = { text = it }, placeholder = { Text("Напр. Идеи, Работа") }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) },
-        confirmButton = { Button(onClick = { onConfirm(text) }) { Text("ОК") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
+        shape = RoundedCornerShape(28.dp),
+        title = { Text("Метка", fontWeight = FontWeight.Bold) },
+        text = { 
+            OutlinedTextField(
+                value = text, 
+                onValueChange = { text = it }, 
+                placeholder = { Text("Напр. Идеи, Работа") }, 
+                singleLine = true, 
+                modifier = Modifier.fillMaxWidth(), 
+                shape = RoundedCornerShape(16.dp)
+            ) 
+        },
+        confirmButton = { 
+            Button(onClick = { onConfirm(text) }, shape = RoundedCornerShape(12.dp)) { Text("ОК") } 
+        },
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { Text("Отмена") } 
+        }
     )
 }
 
@@ -261,7 +371,12 @@ fun HistoryItemUI(version: NoteHistoryEntity, onRestore: (NoteHistoryEntity) -> 
     val date = Date(version.timestamp)
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
-    Surface(onClick = { onRestore(version) }, shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)) {
+    
+    Surface(
+        onClick = { onRestore(version) }, 
+        shape = RoundedCornerShape(20.dp), 
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(timeFormat.format(date), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -276,5 +391,3 @@ fun HistoryItemUI(version: NoteHistoryEntity, onRestore: (NoteHistoryEntity) -> 
         }
     }
 }
-
-

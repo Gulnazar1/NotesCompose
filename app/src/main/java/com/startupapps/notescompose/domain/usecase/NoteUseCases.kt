@@ -11,8 +11,8 @@ data class NoteUseCases(
     val updateNote: UpdateNoteUseCase,
     val deleteNote: DeleteNoteUseCase,
     val togglePin: TogglePinUseCase,
-    val toggleArchive: ToggleArchiveUseCase, // ✅
-    val setReminder: SetReminderUseCase, // ✅
+    val toggleArchive: ToggleArchiveUseCase,
+    val setReminder: SetReminderUseCase,
     val getAllData: GetAllDataUseCase,
     val moveToTrashNote: MoveToTrashNoteUseCase,
     val restoreNote: RestoreNoteUseCase,
@@ -32,7 +32,7 @@ class GetAllDataUseCase(private val repository: NoteRepository) {
     suspend operator fun invoke(): AllData {
         return AllData(
             notes = repository.getAllNotes(),
-            archivedNotes = repository.getArchivedNotes(), // ✅
+            archivedNotes = repository.getArchivedNotes(),
             trashNotes = repository.getTrashNotes(),
             tasks = repository.getAllTasks(),
             trashTasks = repository.getTrashTasks()
@@ -42,7 +42,7 @@ class GetAllDataUseCase(private val repository: NoteRepository) {
 
 data class AllData(
     val notes: List<NoteEntity>,
-    val archivedNotes: List<NoteEntity>, // ✅
+    val archivedNotes: List<NoteEntity>,
     val trashNotes: List<NoteEntity>,
     val tasks: List<TaskEntity>,
     val trashTasks: List<TaskEntity>
@@ -58,10 +58,22 @@ class SetReminderUseCase(private val repository: NoteRepository) {
         repository.updateNote(note.copy(reminderTime = time))
 }
 
-// ... боқимондаи Use Case-ҳо нигоҳ дошта шуданд
 class AddNoteUseCase(private val repository: NoteRepository) {
-    suspend operator fun invoke(title: String, text: String, label: String = "", color: Int = 0xFFFFFFFF.toInt()) = 
-        repository.insertNote(NoteEntity(title = title, text = text, label = label, color = color))
+    suspend operator fun invoke(
+        title: String, 
+        text: String, 
+        label: String = "", 
+        color: Int = 0xFFFFFFFF.toInt(),
+        imageUri: String? = null // ✅
+    ) = repository.insertNote(
+        NoteEntity(
+            title = title, 
+            text = text, 
+            label = label, 
+            color = color,
+            imageUri = imageUri // ✅
+        )
+    )
 }
 
 class DeleteNoteUseCase(private val repository: NoteRepository) {

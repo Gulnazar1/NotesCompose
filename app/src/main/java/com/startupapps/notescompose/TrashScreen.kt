@@ -44,7 +44,7 @@ fun TrashScreen(component: RootComponent.TrashComponent) {
             LargeTopAppBar(
                 title = {
                     Text(
-                        if (component.isNotes) "Сабади қайдҳо" else "Сабади задачаҳо",
+                        if (component.isNotes) "Корзина заметки" else "Корзина задачи",
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.headlineLarge
                     )
@@ -85,7 +85,7 @@ fun TrashScreen(component: RootComponent.TrashComponent) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Сабад холӣ аст", 
+                        "Корзина пуста",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
@@ -122,8 +122,8 @@ fun TrashScreen(component: RootComponent.TrashComponent) {
         if (showClearAllDialog) {
             AlertDialog(
                 onDismissRequest = { showClearAllDialog = false },
-                title = { Text("Тоза кардани сабад?", fontWeight = FontWeight.Bold) },
-                text = { Text("Ҳамаи маълумотҳо дар сабад ба таври ҳамешагӣ нест карда мешаванд.") },
+                title = { Text("Очистит корзину?", fontWeight = FontWeight.Bold) },
+                text = { Text("Все данные в корзине будут безвозвратно удалены.") },
                 confirmButton = {
                     Button(
                         onClick = { 
@@ -132,12 +132,12 @@ fun TrashScreen(component: RootComponent.TrashComponent) {
                         }, 
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Text("Тоза кардан")
+                        Text("Да")
                     }
                 },
                 dismissButton = { 
                     TextButton(onClick = { showClearAllDialog = false }) { 
-                        Text("Бекор кардан", color = MaterialTheme.colorScheme.onSurface) 
+                        Text("Нет", color = MaterialTheme.colorScheme.onSurface)
                     } 
                 }
             )
@@ -177,7 +177,7 @@ fun NoteTrashItem(note: NoteEntity, onRestore: () -> Unit, onDelete: () -> Unit)
                 shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
-                    text = "$daysLeft рӯз монд", 
+                    text = "$daysLeft день остался",
                     fontSize = 10.sp, 
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error,
@@ -219,7 +219,7 @@ fun TaskTrashItem(task: TaskEntity, onRestore: () -> Unit, onDelete: () -> Unit)
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "$daysLeft рӯз боқӣ монд", 
+                    text = "$daysLeft день остался",
                     fontSize = 10.sp, 
                     color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                 )

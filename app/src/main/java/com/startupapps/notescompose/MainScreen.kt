@@ -1,46 +1,110 @@
 package com.startupapps.notescompose
 
-import android.content.Context
-import android.widget.Toast
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.staggeredgrid.*
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Unarchive
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.startupapps.notescompose.data.NoteEntity
 import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.tasks.TasksContent
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,48 +112,116 @@ fun MainScreen(component: RootComponent.MainComponent) {
     val state by component.state.collectAsState()
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+    var showTaskOverview by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val gridState = rememberLazyStaggeredGridState()
+    val tasksListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
     val showTopBarSearchIcon by remember {
-        derivedStateOf { gridState.firstVisibleItemIndex > 0 }
+        derivedStateOf {
+            if (state.selectedTab == 0) gridState.firstVisibleItemIndex > 0
+            else tasksListState.firstVisibleItemIndex > 0
+        }
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            LargeTopAppBar(
-                title = { Text(if (state.selectedTab == 0) "Заметки" else "Задачи", fontWeight = FontWeight.Black) },
-                actions = {
-                    if (showTopBarSearchIcon && state.selectedTab == 0) {
-                        IconButton(onClick = { scope.launch { gridState.animateScrollToItem(0) } }) {
-                            Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.primary)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFFFD600),
+                                Color(0xFF2196F3)
+                            )
+                        )
+                    ),
+                color = Color.Transparent,
+                tonalElevation = 0.dp
+            ) {
+                LargeTopAppBar(
+                    title = {
+                        Text(
+                            if (state.selectedTab == 0) "Заметки" else "Задачи",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 34.sp,
+                            color = Color.White
+                        )
+                    },
+                    actions = {
+                        AnimatedVisibility(
+                            visible = showTopBarSearchIcon,
+                            enter = fadeIn(animationSpec = tween(300)) + scaleIn(animationSpec = tween(300)),
+                            exit = fadeOut(animationSpec = tween(200)) + scaleOut(animationSpec = tween(200))
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.White.copy(alpha = 0.3f)
+                            ) {
+                                IconButton(onClick = {
+                                    scope.launch {
+                                        if (state.selectedTab == 0) gridState.animateScrollToItem(0)
+                                        else tasksListState.animateScrollToItem(0)
+                                    }
+                                }) {
+                                    Icon(Icons.Default.Search, null, tint = Color.White)
+                                }
+                            }
                         }
-                    }
-                    if (state.selectedTab == 0) {
-                        IconButton(onClick = { component.onOpenArchive() }) { 
-                            Icon(Icons.Outlined.Archive, null) 
+                        if (state.selectedTab == 0) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.White.copy(alpha = 0.3f)
+                            ) {
+                                IconButton(onClick = { component.onOpenArchive() }) {
+                                    Icon(Icons.Outlined.Archive, null, tint = Color.White)
+                                }
+                            }
                         }
-
-                    }
-                    IconButton(onClick = { component.onOpenTrash(state.selectedTab == 0) }) { 
-                        Icon(Icons.Outlined.DeleteOutline, null) 
-                    }
-                    IconButton(onClick = { showSettings = true }) { 
-                        Icon(Icons.Outlined.Settings, null) 
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                        if (state.selectedTab == 1) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.White.copy(alpha = if (showTaskOverview) 0.5f else 0.3f)
+                            ) {
+                                IconButton(onClick = { showTaskOverview = !showTaskOverview }) {
+                                    Icon(
+                                        Icons.Outlined.Info,
+                                        null,
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        }
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.3f)
+                        ) {
+                            IconButton(onClick = { component.onOpenTrash(state.selectedTab == 0) }) {
+                                Icon(Icons.Outlined.DeleteOutline, null, tint = Color.White)
+                            }
+                        }
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.3f)
+                        ) {
+                            IconButton(onClick = { showSettings = true }) {
+                                Icon(Icons.Outlined.Settings, null, tint = Color.White)
+                            }
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.largeTopAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    )
                 )
-            )
+            }
         },
         bottomBar = {
             PremiumBottomBar(
@@ -109,7 +241,7 @@ fun MainScreen(component: RootComponent.MainComponent) {
                 }
             )
         },
-        floatingActionButtonPosition = FabPosition.End // ✅ Танзими ҷойгиршавӣ
+        floatingActionButtonPosition = FabPosition.End
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding())) {
             AnimatedContent(
@@ -126,8 +258,11 @@ fun MainScreen(component: RootComponent.MainComponent) {
                 } else {
                     TasksContent(
                         component = component, 
+                        showOverview = showTaskOverview,
                         showAddDialog = showAddTaskDialog,
-                        onDismissAddDialog = { showAddTaskDialog = false }
+                        onDismissAddDialog = { showAddTaskDialog = false },
+                        listState = tasksListState,
+                        showTopBarSearchIcon = showTopBarSearchIcon
                     )
                 }
             }
@@ -151,19 +286,24 @@ fun PremiumFAB(onClick: () -> Unit) {
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.9f else 1f)
 
-    FloatingActionButton(
-        onClick = onClick,
-        interactionSource = interactionSource,
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = Color.White,
-        shape = RoundedCornerShape(18.dp),
+    Box(
         modifier = Modifier
-
             .size(56.dp)
             .scale(scale)
-            .shadow(12.dp, RoundedCornerShape(18.dp), spotColor = MaterialTheme.colorScheme.primary)
+            .shadow(12.dp, RoundedCornerShape(18.dp), spotColor = Color(0xFFFFD600).copy(alpha = 0.4f))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFFFFD600),
+                        Color(0xFF2196F3)
+                    )
+                ),
+                shape = RoundedCornerShape(18.dp)
+            )
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Default.Add, null, modifier = Modifier.size(28.dp))
+        Icon(Icons.Default.Add, null, modifier = Modifier.size(28.dp), tint = Color.White)
     }
 }
 
@@ -174,7 +314,7 @@ fun PremiumBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 12.dp)
             .navigationBarsPadding()
-            .shadow(16.dp, RoundedCornerShape(28.dp), spotColor = MaterialTheme.colorScheme.primary),
+            .shadow(16.dp, RoundedCornerShape(28.dp), spotColor = Color(0xFFFFD600).copy(alpha = 0.3f)),
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
         tonalElevation = 8.dp
@@ -207,11 +347,11 @@ fun PremiumBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
                     Icon(
                         imageVector = data.second,
                         contentDescription = null,
-                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        tint = if (isSelected) Color(0xFF2196F3) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                         modifier = Modifier.scale(scale).size(24.dp)
                     )
                     AnimatedVisibility(visible = isSelected) {
-                        Text(data.first, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text(data.first, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2196F3))
                     }
                 }
             }
@@ -288,15 +428,19 @@ fun NotesContent(
             items(filteredNotes, key = { it.id }) { note ->
                 val dismissState = rememberSwipeToDismissBoxState(
                     confirmValueChange = {
-                        if (it == SwipeToDismissBoxValue.EndToStart) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            component.onDeleteNote(note)
-                            true
-                        } else if (it == SwipeToDismissBoxValue.StartToEnd) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            component.onToggleArchive(note)
-                            false
-                        } else false
+                        when (it) {
+                            SwipeToDismissBoxValue.EndToStart -> {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                component.onDeleteNote(note)
+                                true
+                            }
+                            SwipeToDismissBoxValue.StartToEnd -> {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                component.onToggleArchive(note)
+                                false
+                            }
+                            else -> false
+                        }
                     }
                 )
 

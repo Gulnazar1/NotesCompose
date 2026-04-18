@@ -23,6 +23,7 @@ interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
 
     sealed class Child {
+        class Welcome(val onGetStarted: () -> Unit) : Child()
         class Main(val component: MainComponent) : Child()
         class Trash(val component: TrashComponent) : Child()
         class Archive(val component: MainComponent) : Child()
@@ -46,7 +47,7 @@ interface RootComponent {
         fun onToggleLayout()
         fun onChangeFontSize(size: Float)
         fun onSelectTab(index: Int)
-        fun onBack() // ✅ Илова шуд
+        fun onBack()
     }
 
     interface TrashComponent {
@@ -61,7 +62,7 @@ interface RootComponent {
     }
 
     interface EditComponent {
-        fun onSave(title: String, text: String, label: String, color: Int)
+        fun onSave(title: String, text: String, label: String, color: Int, imageUri: String?)
         fun onBack()
     }
 
@@ -70,7 +71,7 @@ interface RootComponent {
         val state: StateFlow<NoteStore.State>
         fun onLoadHistory()
         fun onRestoreVersion(history: NoteHistoryEntity)
-        fun onSave(title: String, text: String, label: String, color: Int)
+        fun onSave(title: String, text: String, label: String, color: Int, imageUri: String?)
         fun onDelete()
         fun onBack()
     }
@@ -95,13 +96,14 @@ class DefaultRootComponent(
     override val stack: Value<ChildStack<*, RootComponent.Child>> = childStack(
         source = navigation,
         serializer = Screen.serializer(),
-        initialConfiguration = Screen.Main,
+        initialConfiguration = Screen.Welcome,
         handleBackButton = true,
         childFactory = ::createChild
     )
 
     private fun createChild(screen: Screen, childContext: ComponentContext): RootComponent.Child =
         when (screen) {
+            is Screen.Welcome -> RootComponent.Child.Welcome(onGetStarted = { navigation.push(Screen.Main) })
             is Screen.Main -> RootComponent.Child.Main(createMainComponent(childContext))
             is Screen.Trash -> RootComponent.Child.Trash(createTrashComponent(childContext, screen.isNotes))
             is Screen.Archive -> RootComponent.Child.Archive(createMainComponent(childContext))
@@ -125,7 +127,7 @@ class DefaultRootComponent(
         override fun onToggleLayout() = store.accept(NoteStore.Intent.ToggleLayout)
         override fun onChangeFontSize(size: Float) = store.accept(NoteStore.Intent.ChangeFontSize(size))
         override fun onSelectTab(index: Int) = store.accept(NoteStore.Intent.SelectTab(index))
-        override fun onBack() = navigation.pop() // ✅
+        override fun onBack() = navigation.pop()
     }
 
     private fun createTrashComponent(childContext: ComponentContext, _isNotes: Boolean) = object : RootComponent.TrashComponent {
@@ -140,8 +142,8 @@ class DefaultRootComponent(
     }
 
     private fun createEditComponent(childContext: ComponentContext, id: Int?) = object : RootComponent.EditComponent {
-        override fun onSave(title: String, text: String, label: String, color: Int) {
-            store.accept(NoteStore.Intent.Add(title, text, label, color))
+        override fun onSave(title: String, text: String, label: String, color: Int, imageUri: String?) {
+            store.accept(NoteStore.Intent.Add(title, text, label, color, imageUri))
             navigation.pop()
         }
         override fun onBack() = navigation.pop()
@@ -152,15 +154,15 @@ class DefaultRootComponent(
         override val state: StateFlow<NoteStore.State> = store.stateFlow
         override fun onLoadHistory() = store.accept(NoteStore.Intent.LoadHistory(id))
         override fun onRestoreVersion(history: NoteHistoryEntity) = store.accept(NoteStore.Intent.RestoreVersion(history))
-        override fun onSave(title: String, text: String, label: String, color: Int) {
-            val note = store.state.notes.find { it.id == id }
+        override fun onSave(title: String, text: String, label: String, color: Int, imageUri: String?) {
+            val note = store.state.notes.find { it.id == id } ?: store.state.archivedNotes.find { it.id == id }
             if (note != null) {
-                store.accept(NoteStore.Intent.Update(note, title, text, label, color))
+                store.accept(NoteStore.Intent.Update(note, title, text, label, color, imageUri))
                 navigation.pop()
             }
         }
         override fun onDelete() {
-            val note = store.state.notes.find { it.id == id }
+            val note = store.state.notes.find { it.id == id } ?: store.state.archivedNotes.find { it.id == id }
             if (note != null) {
                 store.accept(NoteStore.Intent.MoveToTrash(note))
                 navigation.pop()

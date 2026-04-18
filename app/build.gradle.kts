@@ -67,7 +67,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     
-    // Библиотекаҳои зарурӣ барои Biometric ва FragmentActivity ✅
+    // Coil (Image Loading) ✅
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Библиотекаҳои зарурӣ барои Biometric ва FragmentActivity
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.fragment:fragment-ktx:1.8.2")
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
