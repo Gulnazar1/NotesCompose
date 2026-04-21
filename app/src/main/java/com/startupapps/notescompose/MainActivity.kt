@@ -19,6 +19,8 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.google.android.gms.ads.MobileAds
 import com.startupapps.notescompose.navigation.DefaultRootComponent
 import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.ui.detailscreen.DetailScreen
+import com.startupapps.notescompose.ui.editscreen.EditScreen
 import com.startupapps.notescompose.ui.theme.NotesComposeTheme
 
 class MainActivity : ComponentActivity() {

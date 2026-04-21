@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.tasks
+package com.startupapps.notescompose.ui.tasks
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent

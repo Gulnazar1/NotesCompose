@@ -1,4 +1,4 @@
-package com.startupapps.notescompose
+package com.startupapps.notescompose.ui.editscreen
 
 import android.net.Uri
 import android.widget.Toast
@@ -66,6 +66,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -78,11 +79,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.startupapps.notescompose.navigation.RootComponent
 
-val AppNoteColors = listOf(
-    Color(0xFFFFFFFF), Color(0xFFF28B82), Color(0xFFFBBC04), Color(0xFFFFF475),
-    Color(0xFFCCFF90), Color(0xFFA7FFEB), Color(0xFFCBF0F8), Color(0xFFAFCBEE),
-    Color(0xFFD7AEFB), Color(0xFFFDCFE8), Color(0xFFE6C9A8), Color(0xFFE8EAED)
-)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,7 +202,7 @@ fun EditScreen(component: RootComponent.EditComponent) {
                 }
             }
 
-            // ЗАГОЛОВК В РАМКЕ
+
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -224,7 +221,7 @@ fun EditScreen(component: RootComponent.EditComponent) {
                 )
             )
 
-            // ТЕКСТ В РАМКЕ
+
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
@@ -258,27 +255,8 @@ fun EditScreen(component: RootComponent.EditComponent) {
     }
 }
 
-@Composable
-fun EditIconButton(onClick: () -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color = LocalContentColor.current) {
-    val scale by animateFloatAsState(1f)
-    IconButton(onClick = onClick, modifier = Modifier.scale(scale)) { Icon(icon, null, tint = tint) }
-}
 
-@Composable
-fun EditScreenColorPicker(currentColor: Color, onColorSelected: (Color) -> Unit) {
-    Column(modifier = Modifier.padding(24.dp).padding(bottom = 32.dp)) {
-        Text("Цвет заметки", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
-        Spacer(modifier = Modifier.height(20.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(AppNoteColors) { color ->
-                Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(color).border(width = if (currentColor == color) 3.dp else 1.dp, color = if (currentColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.3f), shape = CircleShape).clickable { onColorSelected(color) })
-            }
-        }
-    }
-}
 
-@Composable
-fun EditScreenLabelDialog(initialLabel: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
-    var text by remember { mutableStateOf(initialLabel) }
-    AlertDialog(onDismissRequest = onDismiss, shape = RoundedCornerShape(28.dp), title = { Text("Метка") }, text = { OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) }, confirmButton = { Button(onClick = { onConfirm(text) }, shape = RoundedCornerShape(12.dp)) { Text("ОК") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } })
-}
+
+
+

@@ -1,4 +1,4 @@
-package com.startupapps.notescompose
+package com.startupapps.notescompose.ui.notesscreen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState

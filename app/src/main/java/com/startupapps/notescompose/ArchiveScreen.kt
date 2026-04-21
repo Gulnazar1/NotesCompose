@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.ui.notesscreen.NoteItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,9 +152,9 @@ fun ArchiveScreen(component: RootComponent.MainComponent, onBack: () -> Unit) {
                             note = note,
                             onClick = { component.onClickNote(note.id) },
                             onTogglePin = { component.onTogglePin(note) },
-                            onToggleArchive = { 
+                            onToggleArchive = {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                component.onToggleArchive(note) 
+                                component.onToggleArchive(note)
                             },
                             onDelete = { component.onDeleteNote(note) },
                             fontSize = state.fontSize

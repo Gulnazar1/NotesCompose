@@ -1,9 +1,10 @@
-package com.startupapps.notescompose.tasks
+package com.startupapps.notescompose.ui.tasks
 
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.compose.ui.graphics.Color
 import com.startupapps.notescompose.receiver.AlarmReceiver
 import java.text.SimpleDateFormat
@@ -94,7 +95,7 @@ fun scheduleNotification(context: Context, message: String, timeInMillis: Long) 
         PendingIntent.FLAG_IMMUTABLE
     )
     try {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,

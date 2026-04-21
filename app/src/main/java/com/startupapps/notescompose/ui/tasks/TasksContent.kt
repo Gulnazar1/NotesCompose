@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.tasks
+package com.startupapps.notescompose.ui.tasks
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

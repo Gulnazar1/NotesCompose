@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.tasks
+package com.startupapps.notescompose.ui.tasks
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize

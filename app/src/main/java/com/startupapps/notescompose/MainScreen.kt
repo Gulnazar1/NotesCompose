@@ -67,7 +67,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.startupapps.notescompose.navigation.RootComponent
-import com.startupapps.notescompose.tasks.TasksContent
+import com.startupapps.notescompose.ui.notesscreen.NotesContent
+import com.startupapps.notescompose.ui.tasks.TasksContent
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -222,7 +223,7 @@ fun MainScreen(component: RootComponent.MainComponent) {
             ) { targetTab ->
                 if (targetTab == 0) {
                     NotesContent(
-                        component = component, 
+                        component = component,
                         gridState = gridState,
                         showTopBarSearchIcon = showTopBarSearchIcon
                     )
