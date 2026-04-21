@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class Screen {
     @Serializable
-    data object Welcome : Screen()
+    data object Splash : Screen()
 
     @Serializable
     data object Main : Screen()
@@ -14,7 +14,7 @@ sealed class Screen {
     data class Trash(val isNotes: Boolean) : Screen()
 
     @Serializable
-    data object Archive : Screen() // ✅ Иловаи экрани Архив
+    data object Archive : Screen()
 
     @Serializable
     data class Edit(val id: Int?) : Screen()

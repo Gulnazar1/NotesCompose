@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,12 +45,11 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -110,10 +110,10 @@ fun EditScreen(component: RootComponent.EditComponent) {
     var showLabelDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = selectedColor,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Новая заметка", fontWeight = FontWeight.Bold) },
+                title = { Text("Новая заметка", fontWeight = FontWeight.Black) },
                 navigationIcon = {
                     EditIconButton(onClick = { component.onBack() }, icon = Icons.AutoMirrored.Filled.ArrowBack)
                 },
@@ -128,55 +128,122 @@ fun EditScreen(component: RootComponent.EditComponent) {
                                 component.onSave(title.trim(), text.trim(), label.trim(), selectedColor.toArgb(),
                                     imageUri?.toString())
                             },
-                            shape = RoundedCornerShape(12.dp)
-                        ) { Text("Создать", fontWeight = FontWeight.Bold) }
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) { Text("Создать", fontWeight = FontWeight.Bold, color = Color.White) }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
         bottomBar = {
             Surface(
-                modifier = Modifier.fillMaxWidth().padding(16.dp).navigationBarsPadding().shadow(12.dp, RoundedCornerShape(24.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .navigationBarsPadding()
+                    .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                tonalElevation = 8.dp
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 4.dp
             ) {
-                Row(modifier = Modifier.padding(8.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { galleryLauncher.launch("image/*") }) { Icon(Icons.Default.Image, "Gallery") }
-                    IconButton(onClick = { Toast.makeText(context, "Камера", Toast.LENGTH_SHORT).show() }) { Icon(Icons.Default.PhotoCamera, "Camera") }
+                Row(
+                    modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { galleryLauncher.launch("image/*") }) { Icon(Icons.Default.Image, "Gallery", tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = { Toast.makeText(context, "Камера", Toast.LENGTH_SHORT).show() }) { Icon(Icons.Default.PhotoCamera, "Camera", tint = MaterialTheme.colorScheme.primary) }
                     Box(modifier = Modifier.width(1.dp).height(24.dp).background(MaterialTheme.colorScheme.onSurface.copy(0.1f)))
-                    IconButton(onClick = { text += "\n• " }) { Icon(Icons.Default.FormatListBulleted, "List") }
+                    IconButton(onClick = { text += "\n• " }) { Icon(Icons.Default.FormatListBulleted, "List", tint = MaterialTheme.colorScheme.primary) }
                     IconButton(onClick = {
                         clipboardManager.setText(AnnotatedString(text))
                         Toast.makeText(context, "Скопировано", Toast.LENGTH_SHORT).show()
-                    }) { Icon(Icons.Default.ContentCopy, "Copy") }
-                    IconButton(onClick = { text = "" }) { Icon(Icons.Default.ClearAll, "Clear", tint = MaterialTheme.colorScheme.error.copy(0.6f)) }
+                    }) { Icon(Icons.Default.ContentCopy, "Copy", tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = { text = "" }) { Icon(Icons.Default.ClearAll, "Clear", tint = MaterialTheme.colorScheme.error) }
                 }
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
             if (imageUri != null) {
-                Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(16.dp))) {
+                Box(modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(20.dp))) {
                     AsyncImage(model = imageUri, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                    IconButton(onClick = { imageUri = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(0.5f), CircleShape)) {
+                    IconButton(
+                        onClick = { imageUri = null },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(0.5f), CircleShape).size(32.dp)
+                    ) {
                         Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(16.dp))
                     }
                 }
             }
 
             if (label.isNotBlank()) {
-                Surface(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), shape = CircleShape) {
-                    Text(label, modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                ) {
+                    Text(
+                        label,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    )
                 }
             }
 
-            Surface(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)), modifier = Modifier.fillMaxWidth()) {
-                TextField(value = title, onValueChange = { title = it }, placeholder = { Text("Заголовок") }, textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black), modifier = Modifier.fillMaxWidth().focusRequester(focusRequester), colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
-            }
+            // ЗАГОЛОВК В РАМКЕ
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                placeholder = { Text("Заголовок заметки...", color = MaterialTheme.colorScheme.onSurface.copy(0.4f)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                )
+            )
 
-            TextField(value = text, onValueChange = { text = it }, placeholder = { Text("Начните писать...") }, textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp), modifier = Modifier.fillMaxSize().weight(1f), colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
+            // ТЕКСТ В РАМКЕ
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text("Начните писать здесь...", color = MaterialTheme.colorScheme.onSurface.copy(0.4f)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                )
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (showColorPicker) {

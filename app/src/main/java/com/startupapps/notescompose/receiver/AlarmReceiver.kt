@@ -35,7 +35,7 @@ class AlarmReceiver : BroadcastReceiver() {
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher) // Агар иконка набошад, launcher истифода мешавад
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Напоминание")
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

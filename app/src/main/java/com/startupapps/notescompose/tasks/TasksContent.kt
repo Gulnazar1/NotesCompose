@@ -1,11 +1,5 @@
 package com.startupapps.notescompose.tasks
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -136,7 +131,7 @@ fun TasksContent(
                 }
             } else {
                 items(filteredTasks, key = { it.id }) { task ->
-                    PremiumTaskItem(
+                    TaskItem(
                         task = task,
                         fontSize = state.fontSize,
                         currentTime = currentTime,
@@ -259,18 +254,22 @@ fun TaskSearchBar(
 ) {
     Surface(
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-        tonalElevation = 8.dp,
-        shadowElevation = 6.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
-        modifier = Modifier.fillMaxWidth()
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .shadow(
+                elevation = 12.dp,
+                shape = RoundedCornerShape(24.dp),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+            ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
     ) {
         Box(
             modifier = Modifier.background(
                 Brush.horizontalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
-                        Color.Transparent,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.07f),
                         MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
                     )
                 )
@@ -279,18 +278,30 @@ fun TaskSearchBar(
             TextField(
                 value = value,
                 onValueChange = onValueChange,
-                placeholder = { Text("Поиск задач и напоминаний") },
+                placeholder = {
+                    Text(
+                        "Поиск задач и напоминаний",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                    )
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 trailingIcon = {
                     if (value.isNotEmpty()) {
                         IconButton(onClick = onClear) {
-                            Icon(Icons.Default.Close, contentDescription = null)
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
                         }
                     }
                 },
@@ -303,7 +314,8 @@ fun TaskSearchBar(
                     cursorColor = MaterialTheme.colorScheme.primary
                 ),
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge
             )
         }
     }

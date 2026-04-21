@@ -16,5 +16,5 @@ data class NoteEntity(
     val label: String = "",
     val color: Int = 0xFFFFFFFF.toInt(),
     val reminderTime: Long? = null,
-    val imageUri: String? = null // ✅ Иловаи сурат
+    val imageUri: String? = null
 )

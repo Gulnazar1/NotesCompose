@@ -50,7 +50,7 @@ interface NoteStore : Store<NoteStore.Intent, NoteStore.State, Nothing> {
         // --- Intent барои нигоҳ доштани таб ---
         data class SelectTab(val index: Int) : Intent()
 
-        // --- Intents барои История (Undo) ---
+        // --- Intents барои История  ---
         data class LoadHistory(val noteId: Int) : Intent()
         data class RestoreVersion(val history: NoteHistoryEntity) : Intent()
     }

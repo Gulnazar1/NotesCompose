@@ -64,14 +64,14 @@ class AddNoteUseCase(private val repository: NoteRepository) {
         text: String, 
         label: String = "", 
         color: Int = 0xFFFFFFFF.toInt(),
-        imageUri: String? = null // ✅
+        imageUri: String? = null
     ) = repository.insertNote(
         NoteEntity(
             title = title, 
             text = text, 
             label = label, 
             color = color,
-            imageUri = imageUri // ✅
+            imageUri = imageUri
         )
     )
 }

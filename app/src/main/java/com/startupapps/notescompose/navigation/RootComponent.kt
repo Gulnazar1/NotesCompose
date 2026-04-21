@@ -7,6 +7,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
@@ -23,7 +24,7 @@ interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
 
     sealed class Child {
-        class Welcome(val onGetStarted: () -> Unit) : Child()
+        class Splash(val onGetStarted: () -> Unit) : Child()
         class Main(val component: MainComponent) : Child()
         class Trash(val component: TrashComponent) : Child()
         class Archive(val component: MainComponent) : Child()
@@ -96,14 +97,14 @@ class DefaultRootComponent(
     override val stack: Value<ChildStack<*, RootComponent.Child>> = childStack(
         source = navigation,
         serializer = Screen.serializer(),
-        initialConfiguration = Screen.Welcome,
+        initialConfiguration = Screen.Splash,
         handleBackButton = true,
         childFactory = ::createChild
     )
 
     private fun createChild(screen: Screen, childContext: ComponentContext): RootComponent.Child =
         when (screen) {
-            is Screen.Welcome -> RootComponent.Child.Welcome(onGetStarted = { navigation.push(Screen.Main) })
+            is Screen.Splash -> RootComponent.Child.Splash(onGetStarted = { navigation.replaceAll(Screen.Main) })
             is Screen.Main -> RootComponent.Child.Main(createMainComponent(childContext))
             is Screen.Trash -> RootComponent.Child.Trash(createTrashComponent(childContext, screen.isNotes))
             is Screen.Archive -> RootComponent.Child.Archive(createMainComponent(childContext))

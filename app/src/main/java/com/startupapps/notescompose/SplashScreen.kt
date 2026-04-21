@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -25,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun WelcomeScreen(onGetStarted: () -> Unit) {
+fun SplashScreen(onGetStarted: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "welcome")
     
     val bgScale by infiniteTransition.animateFloat(
@@ -81,7 +80,6 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
         color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Фоновое изображение без прозрачности (четкое)
             Image(
                 painter = painterResource(id = R.drawable.task),
                 contentDescription = null,
@@ -114,7 +112,7 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 28.sp,
                         lineHeight = 35.sp,
-                        color = Color(0xFF1F2937) // Более мягкий темный цвет
+                        color = MaterialTheme.colorScheme.onBackground
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -124,7 +122,7 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
                 Text(
                     text = "Организуйте свои задачи и мысли в одном удобном приложении.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color(0xFF4B5563), // Спокойный серый цвет
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
@@ -144,13 +142,13 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
                         .shadow(
                             elevation = 20.dp,
                             shape = RoundedCornerShape(32.dp),
-                            spotColor = Color(0xFF2196F3).copy(alpha = 0.6f)
+                            spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                         )
                         .background(
                             brush = Brush.linearGradient(
                                 colors = listOf(
-                                    Color(0xFFFFD600),
-                                    Color(0xFF2196F3)
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary
                                 )
                             ),
                             shape = RoundedCornerShape(32.dp)

@@ -58,7 +58,6 @@ fun SettingsSheet(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Layout Section
             SettingsSectionTitle("Вид списка")
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -82,7 +81,6 @@ fun SettingsSheet(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Font Size Section
             SettingsSectionTitle("Размер текста")
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(0.3f),

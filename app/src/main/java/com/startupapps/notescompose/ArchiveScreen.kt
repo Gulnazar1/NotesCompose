@@ -1,6 +1,5 @@
 package com.startupapps.notescompose
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -10,7 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.Archive
@@ -149,7 +147,7 @@ fun ArchiveScreen(component: RootComponent.MainComponent, onBack: () -> Unit) {
                             }
                         }
                     ) {
-                        NoteItemPremium(
+                        NoteItem(
                             note = note,
                             onClick = { component.onClickNote(note.id) },
                             onTogglePin = { component.onTogglePin(note) },

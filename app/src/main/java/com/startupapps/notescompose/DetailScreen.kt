@@ -46,6 +46,9 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -114,7 +117,7 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
     LaunchedEffect(Unit) { component.onLoadHistory() }
 
     Scaffold(
-        containerColor = selectedColor,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { },
@@ -130,14 +133,6 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                     DetailIconButton(onClick = { showLabelDialog = true }, icon = Icons.Outlined.Label)
                     DetailIconButton(onClick = { showColorPicker = true }, icon = Icons.Outlined.Palette)
                     DetailIconButton(onClick = { showHistory = true }, icon = Icons.Outlined.History)
-                    DetailIconButton(
-                        onClick = { 
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            component.onDelete() 
-                        }, 
-                        icon = Icons.Default.DeleteOutline, 
-                        tint = MaterialTheme.colorScheme.error 
-                    )
                     if (hasChanges && canSave) {
                         Button(
                             onClick = { 
@@ -145,13 +140,17 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                                 component.onSave(title.trim(), text.trim(), label.trim(), selectedColor.toArgb(), null) 
                             },
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.padding(end = 8.dp)
+                            modifier = Modifier.padding(end = 8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Захира", fontWeight = FontWeight.Bold)
+                            Text("Сохранить", fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
         bottomBar = {
@@ -160,10 +159,10 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                     .fillMaxWidth()
                     .padding(16.dp)
                     .navigationBarsPadding()
-                    .shadow(12.dp, RoundedCornerShape(24.dp)),
+                    .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                tonalElevation = 8.dp
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 4.dp
             ) {
                 Row(
                     modifier = Modifier.padding(8.dp).fillMaxWidth(),
@@ -177,13 +176,13 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                             type = "text/plain"
                         }
                         context.startActivity(Intent.createChooser(sendIntent, null))
-                    }) { Icon(Icons.Default.Share, "Share") }
+                    }) { Icon(Icons.Default.Share, "Share", tint = MaterialTheme.colorScheme.primary) }
 
                     Box(modifier = Modifier.width(1.dp).height(24.dp).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
 
-                    IconButton(onClick = { text += "\n• " }) { Icon(Icons.Default.FormatListBulleted, null) }
-                    IconButton(onClick = { text = text.uppercase() }) { Icon(Icons.Default.TextFields, null) }
-                    IconButton(onClick = { text = "" }) { Icon(Icons.Default.ClearAll, null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)) }
+                    IconButton(onClick = { text += "\n• " }) { Icon(Icons.Default.FormatListBulleted, null, tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = { text = text.uppercase() }) { Icon(Icons.Default.TextFields, null, tint = MaterialTheme.colorScheme.primary) }
+                    IconButton(onClick = { text = "" }) { Icon(Icons.Default.ClearAll, null, tint = MaterialTheme.colorScheme.error) }
                 }
             }
         }
@@ -193,63 +192,59 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
             if (label.isNotBlank()) {
                 Surface(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                     modifier = Modifier.clickable { showLabelDialog = true }
                 ) {
                     Text(
                         text = label,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     )
                 }
             }
 
-            Surface(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                placeholder = { Text("Заголовок", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
+                textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    placeholder = { Text("Заголовок", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))) },
-                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
-            }
+            )
 
-
-
-            Surface(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxSize().weight(1f)
-            ) {
-                TextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    placeholder = { Text("Начните писать...", style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))) },
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp),
-                    modifier = Modifier.fillMaxSize(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
+            // ТЕКСТ В РАМКЕ
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text("Начните писать...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                modifier = Modifier.fillMaxSize().weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
-            }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (showHistory) {

@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
                             animation = stackAnimation(slide())
                         ) {
                             when (val child = it.instance) {
-                                is RootComponent.Child.Welcome -> WelcomeScreen(child.onGetStarted)
+                                is RootComponent.Child.Splash -> SplashScreen(child.onGetStarted)
                                 is RootComponent.Child.Main -> MainScreen(child.component)
                                 is RootComponent.Child.Trash -> TrashScreen(child.component)
                                 is RootComponent.Child.Archive -> ArchiveScreen(child.component, onBack = { child.component.onBack() })
