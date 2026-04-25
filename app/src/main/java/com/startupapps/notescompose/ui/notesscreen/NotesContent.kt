@@ -119,7 +119,7 @@ fun NotesContent(
             item(span = StaggeredGridItemSpan.FullLine) {
                 Column {
                     AnimatedVisibility(visible = !showTopBarSearchIcon) {
-                        PremiumSearchBar(value = searchQuery, onValueChange = { searchQuery = it }, onClear = { searchQuery = "" })
+                        SearchBar(value = searchQuery, onValueChange = { searchQuery = it }, onClear = { searchQuery = "" })
                     }
                     if (labels.size > 1) {
                         LazyRow(contentPadding = PaddingValues(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -305,7 +305,7 @@ fun NoteItem(
 }
 
 @Composable
-fun PremiumSearchBar(value: String, onValueChange: (String) -> Unit, onClear: () -> Unit) {
+fun SearchBar(value: String, onValueChange: (String) -> Unit, onClear: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
