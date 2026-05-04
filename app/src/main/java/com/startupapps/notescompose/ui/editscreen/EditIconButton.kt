@@ -12,7 +12,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
-fun EditIconButton(onClick: () -> Unit, icon: ImageVector, tint: Color = LocalContentColor.current) {
+fun EditIconButton(
+    onClick: () -> Unit, icon: ImageVector,
+    tint: Color = LocalContentColor.current
+) {
     val scale by animateFloatAsState(1f)
-    IconButton(onClick = onClick, modifier = Modifier.scale(scale)) { Icon(icon, null, tint = tint) }
+    IconButton(onClick = onClick, modifier = Modifier.scale(scale)) {
+        Icon(
+            icon,
+            null,
+            tint = tint
+        )
+    }
 }

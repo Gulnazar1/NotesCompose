@@ -58,16 +58,17 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.feature.notes.component.NoteDetailComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(component: RootComponent.DetailComponent) {
+fun DetailScreen(component: NoteDetailComponent) {
     val state by component.state.collectAsState()
-    val note = remember(state.notes) { state.notes.find { it.id == component.noteId } }
+    val note = remember(state.notes, state.archivedNotes, component.noteId) {
+        state.notes.find { it.id == component.noteId }
+            ?: state.archivedNotes.find { it.id == component.noteId }
+    }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val clipboardManager = LocalClipboardManager.current
@@ -121,7 +122,11 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                             modifier = Modifier.padding(end = 8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Сохранить", fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(
+                                text = "Сохранить",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
                     }
                 },
@@ -184,7 +189,8 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                     Text(
                         text = label,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -193,7 +199,7 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                 value = title,
                 onValueChange = { title = it },
                 placeholder = { Text("Заголовок", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
-                textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black),
+                textStyle = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -209,7 +215,7 @@ fun DetailScreen(component: RootComponent.DetailComponent) {
                 value = text,
                 onValueChange = { text = it },
                 placeholder = { Text("Начните писать...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxSize().weight(1f),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(

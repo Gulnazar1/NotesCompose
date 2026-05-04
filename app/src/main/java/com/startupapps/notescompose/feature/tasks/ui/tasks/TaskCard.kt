@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.ui.tasks
+package com.startupapps.notescompose.feature.tasks.ui.tasks
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -41,17 +41,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.startupapps.notescompose.data.TaskEntity
+import com.startupapps.notescompose.domain.model.Task
 
 @Composable
 fun TaskItem(
-    task: TaskEntity,
-    fontSize: Float,
+    task: Task,
     currentTime: Long,
     onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit
@@ -144,7 +141,7 @@ fun TaskItem(
                 .animateContentSize()
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                // Красивая левая полоска с приоритетом
+
                 Surface(
                     modifier = Modifier
                         .width(6.dp)
@@ -220,11 +217,11 @@ fun TaskItem(
                         // Основной текст задачи
                         Text(
                             text = task.text,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = fontSize.sp,
-                                fontWeight = if (task.isCompleted) FontWeight.Medium else FontWeight.SemiBold,
-                                lineHeight = (fontSize + 8f).sp
-                            ),
+                            style = if (task.isCompleted) {
+                                MaterialTheme.typography.bodyLarge
+                            } else {
+                                MaterialTheme.typography.titleSmall
+                            },
                             textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                             color = MaterialTheme.colorScheme.onSurface.copy(
                                 alpha = if (task.isCompleted) 0.50f else 0.94f
@@ -317,13 +314,11 @@ private fun TaskReminderBlock(
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
                 color = accentColor
             )
             Text(
                 text = formatReminderDateTime(reminderTime, currentTime),
                 style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
             )
             Text(
@@ -352,9 +347,7 @@ private fun TaskInfoChip(
                 .clip(RoundedCornerShape(16.dp))
                 .padding(horizontal = 11.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = color,
-            fontSize = 11.sp
+            color = color
         )
     }
 }

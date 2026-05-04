@@ -1,6 +1,8 @@
 package com.startupapps.notescompose.ui.notesscreen
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -70,26 +72,27 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.startupapps.notescompose.data.NoteEntity
-import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.domain.model.Note
+import com.startupapps.notescompose.feature.notes.component.NotesListComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesContent(
-    component: RootComponent.MainComponent,
+    component: NotesListComponent,
     gridState: LazyStaggeredGridState,
     showTopBarSearchIcon: Boolean
 ) {
     val state by component.state.collectAsState()
+    val settings by component.settings.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedLabel by remember { mutableStateOf("Все") }
-    var noteToDelete by remember { mutableStateOf<NoteEntity?>(null) }
+    var noteToDelete by remember { mutableStateOf<Note?>(null) }
     val haptic = LocalHapticFeedback.current
 
     val labels = remember(state.notes) {
@@ -110,7 +113,7 @@ fun NotesContent(
     } else {
         LazyVerticalStaggeredGrid(
             state = gridState,
-            columns = if (state.isGridLayout) StaggeredGridCells.Fixed(2) else StaggeredGridCells.Fixed(1),
+            columns = if (settings.isGridLayout) StaggeredGridCells.Fixed(2) else StaggeredGridCells.Fixed(1),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalItemSpacing = 12.dp,
@@ -130,7 +133,12 @@ fun NotesContent(
                                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         selectedLabel = label 
                                     },
-                                    label = { Text(label, fontWeight = FontWeight.Medium) },
+                                    label = {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    },
                                     shape = CircleShape,
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = MaterialTheme.colorScheme.primary,
@@ -192,8 +200,7 @@ fun NotesContent(
                         onDelete = { 
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             if (note.isPinned) noteToDelete = note else component.onDeleteNote(note) 
-                        },
-                        fontSize = state.fontSize
+                        }
                     )
                 }
             }
@@ -203,7 +210,7 @@ fun NotesContent(
     if (noteToDelete != null) {
         AlertDialog(
             onDismissRequest = { noteToDelete = null },
-            title = { Text("Удалить заметку?", fontWeight = FontWeight.Bold) },
+            title = { Text("Удалить заметку?", style = MaterialTheme.typography.titleMedium) },
             confirmButton = { 
                 Button(
                     onClick = { noteToDelete?.let { component.onDeleteNote(it) }; noteToDelete = null },
@@ -217,60 +224,140 @@ fun NotesContent(
 
 @Composable
 fun NoteItem(
-    note: NoteEntity, 
+    note: Note, 
     onClick: () -> Unit, 
     onTogglePin: () -> Unit, 
     onToggleArchive: () -> Unit,
-    onDelete: () -> Unit, 
-    fontSize: Float
+    onDelete: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.97f else 1f, label = "noteScale")
+    val colorScheme = MaterialTheme.colorScheme
+    val isDark = colorScheme.background.luminance() < 0.5f
+    val isInactive = note.isArchived || note.isDeleted
+    val hasCustomColor = note.color != 0xFFFFFFFF.toInt()
+    val accentColor = when {
+        hasCustomColor -> Color(note.color)
+        note.isPinned -> colorScheme.primary
+        else -> colorScheme.secondary
+    }
+    val baseCardColor = if (isDark) {
+        colorScheme.surfaceVariant.copy(alpha = if (isInactive) 0.58f else 0.82f)
+            .compositeOver(colorScheme.surface)
+    } else {
+        if (isInactive) colorScheme.surfaceVariant.copy(alpha = 0.60f) else colorScheme.surface
+    }
+    val cardColor by animateColorAsState(
+        targetValue = when {
+            hasCustomColor -> accentColor.copy(alpha = if (isDark) 0.28f else 0.18f)
+                .compositeOver(baseCardColor)
+            note.isPinned -> colorScheme.primary.copy(alpha = if (isDark) 0.18f else 0.08f)
+                .compositeOver(baseCardColor)
+            else -> baseCardColor
+        },
+        label = "noteCardColor"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = when {
+            note.isPinned -> colorScheme.primary.copy(alpha = if (isDark) 0.68f else 0.46f)
+            hasCustomColor -> accentColor.copy(alpha = if (isDark) 0.42f else 0.24f)
+            isInactive -> colorScheme.onSurfaceVariant.copy(alpha = if (isDark) 0.22f else 0.12f)
+            else -> colorScheme.outline.copy(alpha = if (isDark) 0.34f else 0.14f)
+        },
+        label = "noteBorderColor"
+    )
+    val shadowElevation by animateDpAsState(
+        targetValue = when {
+            isDark && note.isPinned -> 18.dp
+            isDark -> 14.dp
+            note.isPinned -> 12.dp
+            else -> 4.dp
+        },
+        label = "noteShadow"
+    )
+    val gradientAccent = when {
+        hasCustomColor -> accentColor
+        note.isPinned -> colorScheme.primary
+        isInactive -> colorScheme.onSurfaceVariant
+        else -> colorScheme.secondary
+    }
+    val gradientTop = gradientAccent.copy(
+        alpha = when {
+            isDark && isInactive -> 0.10f
+            isDark -> 0.22f
+            isInactive -> 0.05f
+            else -> 0.10f
+        }
+    )
+    val labelContainerColor = accentColor.copy(alpha = if (isDark) 0.18f else 0.10f)
+    val labelTextColor = if (hasCustomColor) {
+        colorScheme.onSurfaceVariant
+    } else {
+        colorScheme.primary
+    }
+    val titleColor = colorScheme.onSurface.copy(alpha = if (isInactive) 0.72f else 0.96f)
+    val bodyColor = colorScheme.onSurfaceVariant.copy(alpha = if (isInactive) 0.58f else 0.78f)
+    val mutedIconColor = colorScheme.onSurfaceVariant.copy(alpha = if (isDark) 0.54f else 0.36f)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .scale(scale)
             .shadow(
-                elevation = if (note.isPinned) 12.dp else 2.dp,
+                elevation = shadowElevation,
                 shape = RoundedCornerShape(24.dp),
-                spotColor = if (note.isPinned) MaterialTheme.colorScheme.primary else Color.Black
+                spotColor = if (note.isPinned) {
+                    colorScheme.primary.copy(alpha = if (isDark) 0.48f else 0.24f)
+                } else {
+                    gradientAccent.copy(alpha = if (isDark) 0.32f else 0.14f)
+                }
             )
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (note.color != 0xFFFFFFFF.toInt()) Color(note.color) else MaterialTheme.colorScheme.surface
+            containerColor = cardColor
         ),
-        border = if (note.isPinned) BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)) else null
+        border = BorderStroke(if (note.isPinned) 1.8.dp else 1.2.dp, borderColor)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            gradientTop,
+                            Color.Transparent,
+                            cardColor
+                        )
+                    )
+                )
+                .padding(16.dp)
+        ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (note.label.isNotBlank()) {
                         Surface(
-                            color = (if (note.color != 0xFFFFFFFF.toInt()) Color.Black else MaterialTheme.colorScheme.primary).copy(alpha = 0.08f),
+                            color = labelContainerColor,
                             shape = CircleShape
                         ) {
                             Text(
                                 text = note.label, 
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), 
-                                fontSize = 10.sp, 
-                                fontWeight = FontWeight.Bold, 
-                                color = if (note.color != 0xFFFFFFFF.toInt()) Color.Black else MaterialTheme.colorScheme.primary
+                                style = MaterialTheme.typography.labelSmall,
+                                color = labelTextColor
                             )
                         }
                     }
                     if (note.isArchived) {
                         Spacer(Modifier.width(4.dp))
-                        Icon(Icons.Default.Archive, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        Icon(Icons.Default.Archive, null, modifier = Modifier.size(12.dp), tint = mutedIconColor)
                     }
                 }
                 IconButton(onClick = onTogglePin, modifier = Modifier.size(24.dp)) {
                     Icon(
                         imageVector = if (note.isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin, 
                         contentDescription = null, 
-                        tint = if (note.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                        tint = if (note.isPinned) colorScheme.primary else mutedIconColor.copy(alpha = 0.70f),
                         modifier = Modifier.size(18.dp).rotate(if (note.isPinned) 0f else 45f)
                     )
                 }
@@ -278,7 +365,8 @@ fun NoteItem(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = note.title, 
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, fontSize = (fontSize + 1).sp), 
+                style = MaterialTheme.typography.titleMedium,
+                color = titleColor,
                 maxLines = 2, 
                 overflow = TextOverflow.Ellipsis
             )
@@ -286,18 +374,18 @@ fun NoteItem(
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = note.text, 
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = (fontSize - 1).sp, lineHeight = 18.sp), 
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), 
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = bodyColor,
                     maxLines = 4, 
                     overflow = TextOverflow.Ellipsis
                 )
             }
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
                 IconButton(onClick = onToggleArchive, modifier = Modifier.size(24.dp)) {
-                    Icon(if (note.isArchived) Icons.Default.Unarchive else Icons.Outlined.Archive, null, tint = MaterialTheme.colorScheme.onSurface.copy(0.3f), modifier = Modifier.size(18.dp))
+                    Icon(if (note.isArchived) Icons.Default.Unarchive else Icons.Outlined.Archive, null, tint = mutedIconColor, modifier = Modifier.size(18.dp))
                 }
                 IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.DeleteOutline, null, tint = MaterialTheme.colorScheme.onSurface.copy(0.2f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.DeleteOutline, null, tint = mutedIconColor.copy(alpha = 0.78f), modifier = Modifier.size(18.dp))
                 }
             }
         }

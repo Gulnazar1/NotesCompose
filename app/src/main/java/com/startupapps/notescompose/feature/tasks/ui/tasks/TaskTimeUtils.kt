@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.ui.tasks
+package com.startupapps.notescompose.feature.tasks.ui.tasks
 
 import android.app.AlarmManager
 import android.app.PendingIntent

@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.ui.tasks
+package com.startupapps.notescompose.feature.tasks.ui.tasks
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -44,17 +44,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.feature.tasks.component.TasksListComponent
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksContent(
-    component: RootComponent.MainComponent,
+    component: TasksListComponent,
     showOverview: Boolean,
     showAddDialog: Boolean,
     onDismissAddDialog: () -> Unit,
@@ -62,7 +60,6 @@ fun TasksContent(
     showTopBarSearchIcon: Boolean = false
 ) {
     val state by component.state.collectAsState()
-    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
 
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -133,7 +130,6 @@ fun TasksContent(
                 items(filteredTasks, key = { it.id }) { task ->
                     TaskItem(
                         task = task,
-                        fontSize = state.fontSize,
                         currentTime = currentTime,
                         onCheckedChange = { component.onUpdateTask(task.copy(isCompleted = it)) },
                         onDelete = { component.onDeleteTask(task) }
@@ -147,9 +143,6 @@ fun TasksContent(
                 onDismiss = onDismissAddDialog,
                 onConfirm = { text, time, priority ->
                     component.onAddTask(text, time, priority)
-                    if (time != null) {
-                        scheduleNotification(context, text, time)
-                    }
                     onDismissAddDialog()
                 }
             )
@@ -233,13 +226,11 @@ private fun TaskOverviewPill(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
                 color = accent
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
                 color = accent.copy(alpha = 0.80f)
             )
         }
@@ -342,8 +333,7 @@ fun EmptyTasksState(isSearchResult: Boolean) {
         }
         Text(
             text = if (isSearchResult) "Ничего не найдено" else "Список задач пока пуст",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleMedium
         )
         Text(
             text = if (isSearchResult) {

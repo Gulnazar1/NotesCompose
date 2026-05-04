@@ -16,7 +16,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun EditScreenLabelDialog(initialLabel: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+fun EditScreenLabelDialog(
+    initialLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
     var text by remember { mutableStateOf(initialLabel) }
-    AlertDialog(onDismissRequest = onDismiss, shape = RoundedCornerShape(28.dp), title = { Text("Метка") }, text = { OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) }, confirmButton = { Button(onClick = { onConfirm(text) }, shape = RoundedCornerShape(12.dp)) { Text("ОК") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } })
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(28.dp),
+        title = { Text("Метка") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(text) },
+                shape = RoundedCornerShape(12.dp)
+            ) { Text("ОК") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } })
 }

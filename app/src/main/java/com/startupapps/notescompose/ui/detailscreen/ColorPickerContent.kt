@@ -25,14 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.startupapps.notescompose.ui.editscreen.AppNoteColors
 
 @Composable
 fun ColorPickerContent(currentColor: Color, onColorSelected: (Color) -> Unit) {
     Column(modifier = Modifier.padding(24.dp).padding(bottom = 32.dp)) {
-        Text("Цвет заметки", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+        Text("Цвет заметки", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(20.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(AppNoteColors) { color ->

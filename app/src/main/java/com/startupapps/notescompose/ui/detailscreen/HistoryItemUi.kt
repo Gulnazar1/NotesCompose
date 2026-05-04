@@ -17,16 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.startupapps.notescompose.data.NoteHistoryEntity
+import com.startupapps.notescompose.domain.model.NoteHistory
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HistoryItemUI(version: NoteHistoryEntity, onRestore: (NoteHistoryEntity) -> Unit) {
+fun HistoryItemUI(version: NoteHistory, onRestore: (NoteHistory) -> Unit) {
     val date = Date(version.timestamp)
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
@@ -38,13 +36,13 @@ fun HistoryItemUI(version: NoteHistoryEntity, onRestore: (NoteHistoryEntity) -> 
     ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(timeFormat.format(date), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(timeFormat.format(date), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Text(dateFormat.format(date), style = MaterialTheme.typography.labelSmall)
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(version.title.ifBlank { "Без заголовка" }, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(version.text.ifBlank { "Пустой текст" }, maxLines = 1, fontSize = 14.sp, color = Color.Gray)
+                Text(version.title.ifBlank { "Без заголовка" }, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                Text(version.text.ifBlank { "Пустой текст" }, style = MaterialTheme.typography.bodyMedium, maxLines = 1, color = Color.Gray)
             }
             Icon(Icons.Default.Restore, null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
         }

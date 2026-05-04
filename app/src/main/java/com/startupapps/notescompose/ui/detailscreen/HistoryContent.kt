@@ -14,14 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.startupapps.notescompose.data.NoteHistoryEntity
+import com.startupapps.notescompose.domain.model.NoteHistory
 
 @Composable
-fun HistoryContent(history: List<NoteHistoryEntity>, onRestore: (NoteHistoryEntity) -> Unit) {
+fun HistoryContent(history: List<NoteHistory>, onRestore: (NoteHistory) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
-        Text("История изменений", modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
+        Text("История изменений", modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.headlineSmall)
         if (history.isEmpty()) {
             Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
                 Text("Версий пока нет", color = Color.Gray)

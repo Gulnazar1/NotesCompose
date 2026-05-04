@@ -19,17 +19,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun EditScreenColorPicker(currentColor: Color, onColorSelected: (Color) -> Unit) {
-    Column(modifier = Modifier.padding(24.dp).padding(bottom = 32.dp)) {
-        Text("Цвет заметки", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+    Column(modifier = Modifier
+        .padding(24.dp)
+        .padding(bottom = 32.dp)) {
+        Text(
+            "Цвет заметки",
+            style = MaterialTheme.typography.titleLarge
+        )
         Spacer(modifier = Modifier.height(20.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(AppNoteColors) { color ->
-                Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(color).border(width = if (currentColor == color) 3.dp else 1.dp, color = if (currentColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.3f), shape = CircleShape).clickable { onColorSelected(color) })
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(
+                            width = if (currentColor == color) 3.dp else 1.dp,
+                            color = if (currentColor == color) MaterialTheme.colorScheme.primary else Color.LightGray.copy(
+                                alpha = 0.3f
+                            ),
+                            shape = CircleShape
+                        )
+                        .clickable { onColorSelected(color) })
             }
         }
     }

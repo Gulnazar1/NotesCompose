@@ -13,6 +13,9 @@ interface NoteDao{
     @Query("SELECT * FROM notes WHERE isDeleted = 0 AND isArchived = 0 ORDER BY isPinned DESC, id DESC")
     suspend fun getAllNotes(): List<NoteEntity>
 
+    @Query("SELECT * FROM notes WHERE id = :id LIMIT 1")
+    suspend fun getNoteById(id: Int): NoteEntity?
+
     // Қайдҳои архившуда ✅
     @Query("SELECT * FROM notes WHERE isArchived = 1 AND isDeleted = 0 ORDER BY id DESC")
     suspend fun getArchivedNotes(): List<NoteEntity>

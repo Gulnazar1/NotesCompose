@@ -1,9 +1,10 @@
-package com.startupapps.notescompose
+package com.startupapps.notescompose.ui.splash
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,14 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.startupapps.notescompose.R
 
 @Composable
 fun SplashScreen(onGetStarted: () -> Unit) {
@@ -108,12 +107,8 @@ fun SplashScreen(onGetStarted: () -> Unit) {
 
                 Text(
                     text = "Запишите то, что важно прямо сейчас.",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 28.sp,
-                        lineHeight = 35.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
 
@@ -129,7 +124,7 @@ fun SplashScreen(onGetStarted: () -> Unit) {
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                val buttonInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                val buttonInteractionSource = remember { MutableInteractionSource() }
                 val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
                 val baseScale by animateFloatAsState(if (isButtonPressed) 0.95f else 1f, label = "buttonScale")
                 val finalButtonScale = if (isButtonPressed) baseScale else buttonPulseScale
@@ -162,9 +157,8 @@ fun SplashScreen(onGetStarted: () -> Unit) {
                 ) {
                     Text(
                         text = "Начать работу",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 

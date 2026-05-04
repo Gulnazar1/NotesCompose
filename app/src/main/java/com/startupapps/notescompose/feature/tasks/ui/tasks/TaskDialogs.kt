@@ -1,4 +1,4 @@
-package com.startupapps.notescompose.ui.tasks
+package com.startupapps.notescompose.feature.tasks.ui.tasks
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
@@ -54,7 +54,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -130,7 +129,6 @@ fun AddTaskDialog(
                             Text(
                                 text = "Новая задача",
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Black,
                                 color = actionColor
                             )
                             Text(
@@ -195,7 +193,7 @@ fun AddTaskDialog(
                             FilterChip(
                                 selected = priority == value,
                                 onClick = { priority = value },
-                                label = { Text(text = label, fontWeight = FontWeight.Bold) },
+                                label = { Text(text = label, style = MaterialTheme.typography.labelMedium) },
                                 modifier = Modifier.weight(1f),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = style.container,
@@ -253,7 +251,6 @@ fun AddTaskDialog(
                             Text(
                                 text = timeText,
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
                                 color = if (selectedTime != null) {
                                     actionColor
                                 } else {
@@ -304,7 +301,7 @@ fun AddTaskDialog(
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                     ) {
-                        Text("Создать", fontWeight = FontWeight.Bold)
+                        Text("Создать", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -410,7 +407,6 @@ private fun TaskDateTimePickerDialog(
                             Text(
                                 text = "📅 Выбор даты и времени",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
@@ -438,15 +434,13 @@ private fun TaskDateTimePickerDialog(
                             Text(
                                 text = "✓ Выбрано",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                fontWeight = FontWeight.SemiBold
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                             Text(
                                 text = previewMillis?.let {
                                     formatReminderDateTime(it, System.currentTimeMillis())
                                 } ?: "Выберите дату",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
                                 color = confirmColor
                             )
                             Text(
@@ -480,7 +474,7 @@ private fun TaskDateTimePickerDialog(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
                             label = {
-                                Text("Календарь", fontWeight = FontWeight.SemiBold)
+                                Text("Календарь", style = MaterialTheme.typography.labelMedium)
                             },
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
@@ -501,7 +495,7 @@ private fun TaskDateTimePickerDialog(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
                             label = {
-                                Text("Время", fontWeight = FontWeight.SemiBold)
+                                Text("Время", style = MaterialTheme.typography.labelMedium)
                             },
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
@@ -576,7 +570,7 @@ private fun TaskDateTimePickerDialog(
                             colors = ButtonDefaults.buttonColors(containerColor = confirmColor),
                             modifier = Modifier.width(120.dp)
                         ) {
-                            Text("Готово", fontWeight = FontWeight.Bold)
+                            Text("Готово", style = MaterialTheme.typography.labelLarge)
                         }
                     }
             }

@@ -73,17 +73,15 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.startupapps.notescompose.navigation.RootComponent
+import com.startupapps.notescompose.feature.notes.component.NoteEditorComponent
 
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditScreen(component: RootComponent.EditComponent) {
+fun EditScreen(component: NoteEditorComponent) {
     var title by remember { mutableStateOf("") }
     var text by remember { mutableStateOf("") }
     var label by remember { mutableStateOf("") }
@@ -110,7 +108,7 @@ fun EditScreen(component: RootComponent.EditComponent) {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Новая заметка", fontWeight = FontWeight.Black) },
+                title = { Text("Новая заметка", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     EditIconButton(onClick = { component.onBack() }, icon = Icons.AutoMirrored.Filled.ArrowBack)
                 },
@@ -129,7 +127,13 @@ fun EditScreen(component: RootComponent.EditComponent) {
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
-                        ) { Text("Создать", fontWeight = FontWeight.Bold, color = Color.White) }
+                        ) {
+                            Text(
+                                text = "Создать",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -197,7 +201,8 @@ fun EditScreen(component: RootComponent.EditComponent) {
                     Text(
                         label,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -210,7 +215,7 @@ fun EditScreen(component: RootComponent.EditComponent) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
-                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                textStyle = MaterialTheme.typography.titleLarge,
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -229,7 +234,7 @@ fun EditScreen(component: RootComponent.EditComponent) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                textStyle = MaterialTheme.typography.bodyLarge,
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -254,9 +259,6 @@ fun EditScreen(component: RootComponent.EditComponent) {
         }
     }
 }
-
-
-
 
 
 

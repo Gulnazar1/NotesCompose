@@ -1,14 +1,20 @@
 package com.startupapps.notescompose
 
 import android.app.Application
+import android.content.Context
 import androidx.room.Room
+import com.startupapps.notescompose.app.di.AppGraph
 import com.startupapps.notescompose.data.AppDatabase
-import com.startupapps.notescompose.data.NoteRepositoryImpl
-import com.startupapps.notescompose.domain.usecase.*
+import com.startupapps.notescompose.data.repository.RoomNotesRepository
+import com.startupapps.notescompose.data.repository.RoomTasksRepository
+import com.startupapps.notescompose.domain.usecase.notes.createNotesUseCases
+import com.startupapps.notescompose.domain.usecase.tasks.createTasksUseCases
+import com.startupapps.notescompose.feature.settings.data.SharedPreferencesSettingsRepository
+import com.startupapps.notescompose.feature.tasks.data.AlarmTaskReminderScheduler
 
 class NotesApp : Application() {
 
-    lateinit var useCases: NoteUseCases
+    lateinit var appGraph: AppGraph
         private set
 
     override fun onCreate() {
@@ -22,28 +28,16 @@ class NotesApp : Application() {
             .fallbackToDestructiveMigration()
             .build()
 
-        val repository = NoteRepositoryImpl(db.noteDao())
+        val dao = db.noteDao()
+        val preferences = applicationContext.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val notesRepository = RoomNotesRepository(dao)
+        val tasksRepository = RoomTasksRepository(dao)
 
-        useCases = NoteUseCases(
-            addNote = AddNoteUseCase(repository),
-            updateNote = UpdateNoteUseCase(repository),
-            deleteNote = DeleteNoteUseCase(repository),
-            togglePin = TogglePinUseCase(repository),
-            toggleArchive = ToggleArchiveUseCase(repository),
-            setReminder = SetReminderUseCase(repository),
-            getAllData = GetAllDataUseCase(repository),
-            moveToTrashNote = MoveToTrashNoteUseCase(repository),
-            restoreNote = RestoreNoteUseCase(repository),
-            clearNotesTrash = ClearNotesTrashUseCase(repository),
-            addTask = AddTaskUseCase(repository),
-            updateTask = UpdateTaskUseCase(repository),
-            moveTaskToTrash = MoveTaskToTrashUseCase(repository),
-            restoreTask = RestoreTaskUseCase(repository),
-            deleteTaskForever = DeleteTaskForeverUseCase(repository),
-            clearTasksTrash = ClearTasksTrashUseCase(repository),
-            loadHistory = LoadHistoryUseCase(repository),
-            restoreVersion = RestoreVersionUseCase(repository),
-            autoDeleteOldItems = AutoDeleteOldItemsUseCase(repository)
+        appGraph = AppGraph(
+            notesUseCases = createNotesUseCases(notesRepository),
+            tasksUseCases = createTasksUseCases(tasksRepository),
+            settingsRepository = SharedPreferencesSettingsRepository(preferences),
+            reminderScheduler = AlarmTaskReminderScheduler(applicationContext)
         )
     }
 }

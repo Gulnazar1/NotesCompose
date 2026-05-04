@@ -1,35 +1,26 @@
-package com.startupapps.notescompose
+package com.startupapps.notescompose.feature.settings.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.FormatSize
-import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.ViewStream
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +45,7 @@ fun SettingsSheet(
         ) {
             Text(
                 "Настройки",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
@@ -102,7 +93,7 @@ fun SettingsSheet(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "${fontSize.toInt()} sp",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
 
@@ -120,10 +111,8 @@ fun SettingsSheet(
 fun SettingsSectionTitle(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.labelLarge.copy(
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        ),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
     )
 }
@@ -133,7 +122,7 @@ fun LayoutOptionCard(
     modifier: Modifier = Modifier,
     selected: Boolean,
     onClick: () -> Unit,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -161,8 +150,7 @@ fun LayoutOptionCard(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 label,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.labelLarge,
                 color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface.copy(0.5f)
             )
         }
