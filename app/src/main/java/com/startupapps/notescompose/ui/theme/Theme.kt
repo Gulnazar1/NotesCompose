@@ -50,7 +50,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun NotesComposeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Отключаем динамические цвета для сохранения стиля
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
